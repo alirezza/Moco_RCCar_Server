@@ -71,11 +71,11 @@ class Form(QDialog):
         self.statusText3 = QLabel("Status Label")
         self.inputfield = QLineEdit()
 
-        self.slider2.setRange(-300, 300)
-        self.slider2.setTickInterval(37)
+        self.slider2.setRange(0, 180)
+        self.slider2.setTickInterval(1)
         self.slider2.setValue(ServerConfig.getInstance().testingsteeringangle)
 
-        self.slider1.setRange(-300, 300)
+        self.slider1.setRange(-255, 255)
         self.slider1.setTickInterval(1)
         self.slider1.setValue(ServerConfig.getInstance().vehicle_speed)
 

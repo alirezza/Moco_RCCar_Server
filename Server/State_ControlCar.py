@@ -82,9 +82,6 @@ class StateControlCar(State):
             track_img = cv.warpPerspective(new_frame, self.matrix, (self.img_width, self.img_height))
             carMarkerCorners, carMarkerIds, rejectedCandidates = cv.aruco.detectMarkers(track_img, self.dictionary,
                                                                                         parameters=self.parameters)
-            '''for point in self.path_pts:
-                cv.circle(track_img, (point[0], point[1]), 4, (0, 255, 255), -1)
-            cv.polylines(track_img, [np.array(self.path_pts)], True, (0, 255, 0), 3)'''
 
             # 2 Ermittle Position/Winkel Fahrzeug
             # if marker is detected
