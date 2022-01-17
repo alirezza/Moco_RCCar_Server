@@ -13,8 +13,10 @@ class StateControlCar(State):
     def __init__(self):
         self.control_active = False
         self.control_active_req = False
+        
         self.velocity = 0
         self.angle = 115
+
 
     def next(self):
         return self
@@ -28,6 +30,9 @@ class StateControlCar(State):
     def set_velocity(self, v):
         self.velocity = v
 
+    def get_velocity(self):
+        return self.velocity
+
     def set_angle(self, v):
         self.angle = v
 
@@ -36,6 +41,7 @@ class StateControlCar(State):
         if self.control_active_req is not self.control_active:
             self.control_active = self.control_active_req
             if self.control_active:
+
                 for i in range(10):
                     msg = str(170).zfill(3) + " " + str(115).zfill(3)
                     self.clientSocket.sendto(bytes(msg, "utf-8"), (self.UDPServer_IP, self.UDPServer_Port))
@@ -45,6 +51,7 @@ class StateControlCar(State):
                 msg = str(0).zfill(3) + " " + str(115).zfill(3)
                 self.clientSocket.sendto(bytes(msg, "utf-8"), (self.UDPServer_IP, self.UDPServer_Port))
                 sleep(ServerConfig.getInstance().MessageDelay)
+
 
         elif self.control_active:
             # 9 Sende Daten (Querablagefehler, Winkeldifferenz, Krümmung)sg = str(dY_m, dPsi_rad/dPsi_deg, K_minv)  # "Winkel, Geschwindigkeit" muss formatiert sein
@@ -64,6 +71,7 @@ class StateControlCar(State):
         print("Enter Control State")
 
     def on_leave(self):
+
         msg = str(0).zfill(3) + " " + str(115).zfill(3)
         self.clientSocket.sendto(bytes(msg, "utf-8"), (self.UDPServer_IP, self.UDPServer_Port))
         sleep(ServerConfig.getInstance().MessageDelay)
