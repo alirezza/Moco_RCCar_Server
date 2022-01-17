@@ -102,12 +102,9 @@ class StateControlCar(State):
                         carCoordinateY = int((topLeft[1] + bottomRight[1]) / 2.0)
                         self.lastCoordinate = (carCoordinateX, carCoordinateY)
                         self.carCoordinateX_cm = carCoordinateX / self.factorX
-                        self.carCoordinateY_cm = carCoordinateY / self.factorY
+                        self.carCoordinateY_cm = carCoordinateY / self.factorY  # factorx factory ???ß
                         self.lastCoordinate_cm = (self.carCoordinateX_cm, self.carCoordinateY_cm)
                         cv.circle(track_img, (carCoordinateX, carCoordinateY), 4, (0, 0, 255), -1)
-                        '''cv.putText(track_img, f"x: {carCoordinateX}, y: {carCoordinateY}",
-                                   (carCoordinateX, carCoordinateY - 15),
-                                   cv.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 1)'''
 
                         # draw car figure
                         carFigure = [[int((topLeft[0] + topRight[0]) / 2.0), int((topLeft[1] + topRight[1]) / 2.0)],
@@ -120,7 +117,8 @@ class StateControlCar(State):
                         # calculate heading angle
                         if not (topLeft[0] == bottomLeft[0] and topLeft[1] == bottomLeft[1]):
 
-                            self.headingAngleRad = np.arctan2(bottomRight[0] - topRight[0], topRight[1] - bottomRight[1]) + math.pi/2
+                            self.headingAngleRad = np.arctan2(bottomRight[0] - topRight[0],
+                                                              topRight[1] - bottomRight[1]) + math.pi / 2  # arctan2?
 
                             if self.headingAngleRad < 0:
                                 self.headingAngleRad = (self.headingAngleRad + 2 * math.pi)
@@ -132,10 +130,6 @@ class StateControlCar(State):
                 if self.lastFigure:
                     cv.circle(track_img, self.lastCoordinate, 4, (0, 255, 255), -1)
                     cv.polylines(track_img, [np.array(self.lastFigure)], True, (0, 0, 255), 3)
-
-            #print(f"coordinates - x, y: {self.carCoordinateX_cm}cm, {self.carCoordinateY_cm}cm")
-            #print(f"heading angle: {self.headingAngle}")
-            #print(f"heading angle rad: {self.headingAngleRad}")
 
             # 3 Ermittle Referenzpunkt (nähester Punkt) auf Pfad
             if self.carCoordinateX_cm > 0 and self.carCoordinateY_cm > 0:
@@ -149,16 +143,20 @@ class StateControlCar(State):
                 start_index = self.index - ServerConfig.getInstance().lookback_n
                 if start_index < 0:
                     start_index = len(self.path_pts) + start_index
-                '''print(f'start index: {start_index}')
-                print(f'path length: {len(self.path_pts)}')
-                print(self.path_pts)'''
+
                 # if len(self.path_pts)-1 < ServerConfig.getInstance().lookahead_n:
                 if start_index + 1 + ServerConfig.getInstance().lookahead_n > len(self.path_pts) - 1:
-                    self.current_path = self.path_pts[start_index:len(self.path_pts)] + self.path_pts[0:ServerConfig.getInstance().lookahead_n - (len(self.path_pts)-1 - self.index)]
-                    self.current_path_cm = self.path_pts_cm[start_index:len(self.path_pts)] + self.path_pts_cm[0:ServerConfig.getInstance().lookahead_n - (len(self.path_pts)-1 - self.index)]
+                    self.current_path = self.path_pts[start_index:len(self.path_pts)] + self.path_pts[
+                                                                                        0:ServerConfig.getInstance().lookahead_n - (
+                                                                                                len(self.path_pts) - 1 - self.index)]
+                    self.current_path_cm = self.path_pts_cm[start_index:len(self.path_pts)] + self.path_pts_cm[
+                                                                                              0:ServerConfig.getInstance().lookahead_n - (
+                                                                                                      len(self.path_pts) - 1 - self.index)]
                 else:
-                    self.current_path = self.path_pts[start_index:self.index + ServerConfig.getInstance().lookahead_n + 1]
-                    self.current_path_cm = self.path_pts_cm[start_index:self.index + ServerConfig.getInstance().lookahead_n + 1]
+                    self.current_path = self.path_pts[
+                                        start_index:self.index + ServerConfig.getInstance().lookahead_n + 1]
+                    self.current_path_cm = self.path_pts_cm[
+                                           start_index:self.index + ServerConfig.getInstance().lookahead_n + 1]
                 # print(f'current path: {self.current_path}')
                 '''for p_x, p_y in self.current_path:
                     cv.circle(track_img, (p_x, p_y), 10, (255, 0, 0),
@@ -169,22 +167,29 @@ class StateControlCar(State):
                 # 5 Berechne Abstände von Fahrzeug zu nächsten Punkten
                 distance_to_vec = []
                 for x, y in self.current_path_cm:
-                    #print(f'x, y - path point: {x, y}')
+                    # print(f'x, y - path point: {x, y}')
                     x_diff, y_diff = x - self.lastCoordinate_cm[0], y - self.lastCoordinate_cm[1]
-                    #print(f'x_diff, y_diff: {x_diff, y_diff}')
+
                     # 6 Transformiere Koordinatensystem zu Fahrzeugsicht
-                    distance_to_vec.append([round(x_diff, 2) * math.cos(self.headingAngleRad) + round(y_diff, 2) * math.sin(self.headingAngleRad), -1 * (round(x_diff, 2) * math.sin(self.headingAngleRad) - round(y_diff, 2) * math.cos(self.headingAngleRad))])
+                    distance_to_vec.append([round(x_diff, 2) * math.cos(self.headingAngleRad) + round(y_diff,
+                                                                                                      2) * math.sin(
+                        self.headingAngleRad), -1 * (round(x_diff, 2) * math.sin(self.headingAngleRad) - round(y_diff,
+                                                                                                               2) * math.cos(
+                        self.headingAngleRad))])
                 # print("dis_to_vec_list: ", [i[0] for i in distance_to_vec], [i[1] for i in distance_to_vec])
                 # print("dis_to_vec_list: ", distance_to_vec)
                 # print("index : ", self.index, "start_index: ", start_index)
-                cv.putText(track_img, f"x: {round(distance_to_vec[ServerConfig.getInstance().lookback_n][0], 2)} cm, y: {round(distance_to_vec[ServerConfig.getInstance().lookback_n][1], 2)} cm",
+                cv.putText(track_img,
+                           f"x: {round(distance_to_vec[ServerConfig.getInstance().lookback_n][0], 2)} cm, y: {round(distance_to_vec[ServerConfig.getInstance().lookback_n][1], 2)} cm",
                            (self.lastCoordinate[0] + 20, self.lastCoordinate[1] - 15),
                            cv.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 1)
                 # 6 Berechne Querablagefehler
                 # Fzggeschwindigkeit (längs) noch nicht berücksichtigt
-                coeffs = np.polyfit([i[0] for i in distance_to_vec], [i[1] for i in distance_to_vec], 2)  # bilde Polynom aus Abstand zu Punkten
+                coeffs = np.polyfit([i[0] for i in distance_to_vec], [i[1] for i in distance_to_vec],
+                                    2)  # bilde Polynom aus Abstand zu Punkten
                 # print(f'coeff: {coeffs}')
-                dY_m = -1 * np.polyval(coeffs, ServerConfig.getInstance().Preview_Dist_dY_m)  # Querablagefehler, vielleicht Vorzeichen umdrehen
+                dY_m = -1 * np.polyval(coeffs,
+                                       ServerConfig.getInstance().Preview_Dist_dY_m)  # Querablagefehler, vielleicht Vorzeichen umdrehen
                 cv.putText(track_img,
                            f"dY_m: {round(dY_m, 2)} cm",
                            (self.lastCoordinate[0] + 20, self.lastCoordinate[1] - 30),
@@ -196,11 +201,15 @@ class StateControlCar(State):
                 coeffsPsi = np.polynomial.polynomial.polyder(coeffs_flipped, 1)  # bilde Abteilungsfunktion
                 # print(f'ableitungscoeff: {coeffsPsi}')
                 coeffsPsi_flipped = np.flip(coeffsPsi)
-                dPsi_deg = -1 * np.rad2deg(math.atan(np.polyval(coeffsPsi_flipped, ServerConfig.getInstance().Preview_Dist_dPsi_m)))  # Winkeldifferenz Fahrzeug zur Tangente
-                dPsi_radA = -1 * (np.arctan(np.polyval(coeffsPsi_flipped, ServerConfig.getInstance().Preview_Dist_K_A_m)))
-                dPsi_radB = -1 * (np.arctan(np.polyval(coeffsPsi_flipped, ServerConfig.getInstance().Preview_Dist_K_B_m)))
+                dPsi_deg = -1 * np.rad2deg(math.atan(np.polyval(coeffsPsi_flipped,
+                                                                ServerConfig.getInstance().Preview_Dist_dPsi_m)))  # Winkeldifferenz Fahrzeug zur Tangente
+                dPsi_radA = -1 * (
+                    np.arctan(np.polyval(coeffsPsi_flipped, ServerConfig.getInstance().Preview_Dist_K_A_m)))
+                dPsi_radB = -1 * (
+                    np.arctan(np.polyval(coeffsPsi_flipped, ServerConfig.getInstance().Preview_Dist_K_B_m)))
 
-                K_minv = (dPsi_radB - dPsi_radA) / (ServerConfig.getInstance().Preview_Dist_K_B_m - ServerConfig.getInstance().Preview_Dist_K_A_m)  # Krümmung
+                K_minv = (dPsi_radB - dPsi_radA) / (
+                        ServerConfig.getInstance().Preview_Dist_K_B_m - ServerConfig.getInstance().Preview_Dist_K_A_m)  # Krümmung
                 # Einheit, K: rad / cm
                 # print(f'dY: {dY_m}, dPsi_deg: {dPsi_deg}, K_minv: {K_minv}')
 
@@ -238,7 +247,8 @@ class StateControlCar(State):
 
                 diff_steerAngle = steerAngle_req - self.finalSteeringAngle_deg
                 if abs(diff_steerAngle) > self.dSteeringAngle_allowed:
-                    self.finalSteeringAngle_deg = self.finalSteeringAngle_deg + (self.dSteeringAngle_allowed * np.sign(diff_steerAngle))
+                    self.finalSteeringAngle_deg = self.finalSteeringAngle_deg + (
+                            self.dSteeringAngle_allowed * np.sign(diff_steerAngle))
                 else:
                     self.finalSteeringAngle_deg = steerAngle_req
                 cv.putText(track_img,
@@ -262,7 +272,8 @@ class StateControlCar(State):
                 # print(f'coeffs: {coeffs}')
                 # coeffs_px = [i * self.factor for i in coeffs]
 
-                coeffs_px = np.polyfit([i[0] for i in self.current_path], [i[1] for i in self.current_path], 2)  # bilde Polynom aus Abstand zu Punkten
+                coeffs_px = np.polyfit([i[0] for i in self.current_path], [i[1] for i in self.current_path],
+                                       2)  # bilde Polynom aus Abstand zu Punkten
                 cv_pts_y = [np.polyval(coeffs_px, i[0]) for i in self.current_path]
                 cv_pts = []
                 for i in range(len(self.current_path)):
@@ -272,7 +283,7 @@ class StateControlCar(State):
                     cv.circle(track_img, i, 5, (255, 0, 0))
                 cv.polylines(track_img, [np.array(cv_pts)], False, (0, 0, 255), 1)
 
-                #Activate/Deactivate Control
+                # Activate/Deactivate Control
                 if self.control_active_req is not self.control_active:
                     self.control_active = self.control_active_req
                     if self.control_active:
@@ -295,7 +306,8 @@ class StateControlCar(State):
                         self.clientSocket.sendto(bytes(str(msg), "utf-8"), (self.UDPServer_IP, self.UDPServer_Port))
                         sleep(ServerConfig.getInstance().MessageDelay)'''
 
-                    accel = ServerConfig.getInstance().vehicle_const_speed + int(pow(abs(self.finalSteeringAngle_deg) * 0.1, 2.5))
+                    accel = ServerConfig.getInstance().vehicle_const_speed + int(
+                        pow(abs(self.finalSteeringAngle_deg) * 0.1, 2.5))
                     # accel = ServerConfig.getInstance().vehicle_const_speed + int(abs(self.finalSteeringAngle_deg) * 0.3)
                     # accel = 100
                     # print(accel)

@@ -13,8 +13,8 @@ class StateControlCar(State):
     def __init__(self):
         self.control_active = False
         self.control_active_req = False
-        self.velocity = 50
-        self.angle = 37
+        self.velocity = 170
+        self.angle = 107
 
     def next(self):
         return self
@@ -28,6 +28,9 @@ class StateControlCar(State):
     def set_velocity(self, v):
         self.velocity = v
 
+    def get_velocity(self):
+        return self.velocity
+
     def set_angle(self, v):
         self.angle = v
 
@@ -36,10 +39,14 @@ class StateControlCar(State):
         if self.control_active_req is not self.control_active:
             self.control_active = self.control_active_req
             if self.control_active:
-                msg = "on"
+                msg = "170 107"
+                for i in range(10):
+                    self.clientSocket.sendto(bytes(msg, "utf-8"), (self.UDPServer_IP, self.UDPServer_Port))
+
             # send Anfahrreq
             else:
-                msg = "off"
+                msg = "000 107"
+                self.clientSocket.sendto(bytes(msg, "utf-8"), (self.UDPServer_IP, self.UDPServer_Port))
 
         elif self.control_active:
             # 9 Sende Daten (Querablagefehler, Winkeldifferenz, Krümmung)sg = str(dY_m, dPsi_rad/dPsi_deg, K_minv)  # "Winkel, Geschwindigkeit" muss formatiert sein
@@ -59,6 +66,7 @@ class StateControlCar(State):
         print("Enter Control State")
 
     def on_leave(self):
-        msg = "off"
+        #msg = "off"
+        msg = "000 107"
         self.clientSocket.sendto(bytes(msg, "utf-8"), (self.UDPServer_IP, self.UDPServer_Port))
         print("Leaving Control Car State")

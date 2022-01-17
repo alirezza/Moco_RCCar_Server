@@ -1,6 +1,6 @@
 import threading
 from PySide6.QtCore import *
-from PySide6.QtWidgets import QApplication, QPushButton, QDialog, QVBoxLayout, QLabel, QSlider
+from PySide6.QtWidgets import QApplication, QPushButton, QDialog, QVBoxLayout, QLabel, QSlider, QLineEdit
 from Configuration import ServerConfig
 from StateLib import *
 from State_ControlCar import StateControlCar
@@ -42,8 +42,11 @@ def stop_car():
 @Slot()
 def set_velocity(vel):
     if isinstance(myLogicThread.myStateMachine.currentState, StateControlCar):
+        #myLogicThread.myStateMachine.currentState.set_velocity(myDialog.inputfield.text())
+        #myDialog.statusText3.setText((str(myDialog.inputfield.text())))
         myLogicThread.myStateMachine.currentState.set_velocity(vel)
-    print("velocity: " + str(vel))
+        myDialog.statusText3.setText(str(vel))
+    print("velocity: " + myDialog.inputfield.text())
 
 
 @Slot()
@@ -54,6 +57,7 @@ def set_angle(vel):
 
 
 class Form(QDialog):
+
     def __init__(self, parent=None):
         super(Form, self).__init__(parent)
         # Create widgets
@@ -64,6 +68,8 @@ class Form(QDialog):
         self.statusText1 = QLabel("Status Label")
         self.slider2 = QSlider(Qt.Horizontal)
         self.statusText2 = QLabel("Status Label")
+        self.statusText3 = QLabel("Status Label")
+        self.inputfield = QLineEdit()
 
         self.slider2.setRange(-300, 300)
         self.slider2.setTickInterval(37)
@@ -79,6 +85,8 @@ class Form(QDialog):
         layout.addWidget(self.button6)
         layout.addWidget(self.button7)
         layout.addWidget(self.statusText1)
+        layout.addWidget(self.statusText3)
+        #layout.addWidget(self.inputfield)
         layout.addWidget(self.slider1)
         layout.addWidget(self.statusText2)
         layout.addWidget(self.slider2)
@@ -102,6 +110,7 @@ myDialog.slider1.valueChanged.connect(lambda: set_velocity(myDialog.slider1.valu
 myDialog.statusText1.setText("Vehicle Velocity")
 myDialog.slider2.valueChanged.connect(lambda: set_angle(myDialog.slider2.value()))
 myDialog.statusText2.setText("Vehicle Angle")
+myDialog.statusText3.setText(str(ServerConfig.getInstance().vehicle_speed))
 
 myDialog.show()
 
