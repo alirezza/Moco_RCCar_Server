@@ -1,6 +1,8 @@
 import threading
+
 from PySide6.QtCore import *
 from PySide6.QtWidgets import QApplication, QPushButton, QDialog, QVBoxLayout, QLabel, QSlider, QLineEdit
+
 from Configuration import ServerConfig
 from StateLib import *
 from State_ControlCar import StateControlCar
@@ -42,8 +44,8 @@ def stop_car():
 @Slot()
 def set_velocity(vel):
     if isinstance(myLogicThread.myStateMachine.currentState, StateControlCar):
-        #myLogicThread.myStateMachine.currentState.set_velocity(myDialog.inputfield.text())
-        #myDialog.statusText3.setText((str(myDialog.inputfield.text())))
+        # myLogicThread.myStateMachine.currentState.set_velocity(myDialog.inputfield.text())
+        # myDialog.statusText3.setText((str(myDialog.inputfield.text())))
         myLogicThread.myStateMachine.currentState.set_velocity(vel)
         myDialog.statusText3.setText(str(vel))
     print("velocity: " + myDialog.inputfield.text())
@@ -86,7 +88,7 @@ class Form(QDialog):
         layout.addWidget(self.button7)
         layout.addWidget(self.statusText1)
         layout.addWidget(self.statusText3)
-        #layout.addWidget(self.inputfield)
+        # layout.addWidget(self.inputfield)
         layout.addWidget(self.slider1)
         layout.addWidget(self.statusText2)
         layout.addWidget(self.slider2)

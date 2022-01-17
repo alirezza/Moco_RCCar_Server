@@ -43,7 +43,6 @@ class ServerConfig:
     # Vehicle
     vehicle_speed = 135
 
-
     vehicle_wheelbase = 9.75 * 1.15  # Radstand, Einheit: cm  # 1.15
     vehicle_steerAngle_MAX = 150  # Einheit: deg
     vehicle_steerAngle_MIN = 30  # s.o.

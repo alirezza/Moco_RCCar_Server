@@ -1,11 +1,12 @@
-from StateLib import *
-from Configuration import ServerConfig
+import math
+import socket
+from time import sleep
+
 import cv2 as cv
 import numpy as np
-from numpy.polynomial import polynomial
-import socket
-import math
-from time import sleep
+
+from Configuration import ServerConfig
+from StateLib import *
 
 
 class StateControlCar(State):
@@ -299,14 +300,13 @@ class StateControlCar(State):
                         self.clientSocket.sendto(bytes(msg, "utf-8"), (self.UDPServer_IP, self.UDPServer_Port))
                         sleep(ServerConfig.getInstance().MessageDelay)
 
-
-                    #msg = "255 " + str(int(-self.finalSteeringAngle_deg))
-                    #self.clientSocket.sendto(bytes(str(msg), "utf-8"), (self.UDPServer_IP, self.UDPServer_Port))
-                    #sleep(ServerConfig.getInstance().MessageDelay)
+                    # msg = "255 " + str(int(-self.finalSteeringAngle_deg))
+                    # self.clientSocket.sendto(bytes(str(msg), "utf-8"), (self.UDPServer_IP, self.UDPServer_Port))
+                    # sleep(ServerConfig.getInstance().MessageDelay)
                 elif self.control_active:
                     # 9 Sende Daten (Querablagefehler, Winkeldifferenz, Krümmung)sg = str(dY_m, dPsi_rad/dPsi_deg, K_minv)  # "Winkel, Geschwindigkeit" muss formatiert sein
 
-                    #accel = ServerConfig.getInstance().vehicle_speed + int(
+                    # accel = ServerConfig.getInstance().vehicle_speed + int(
                     #    pow(abs(self.finalSteeringAngle_deg) * 0.1, 2.5))
                     accel = self.velocity
                     angle = self.finalSteeringAngle_deg
@@ -318,18 +318,16 @@ class StateControlCar(State):
                     self.clientSocket.sendto(bytes(msg, "utf-8"), (self.UDPServer_IP, self.UDPServer_Port))
                     sleep(ServerConfig.getInstance().MessageDelay)
 
-
-
                     # accel = ServerConfig.getInstance().vehicle_const_speed + int(abs(self.finalSteeringAngle_deg) * 0.3)
                     # accel = 100
                     # print(accel)
                     # accel = self.velocity + int(pow(abs(self.finalSteeringAngle_deg) * 0.2, 2))
                     # print(self.velocity)
-                    #print(f'accel: {accel}')
+                    # print(f'accel: {accel}')
                     # msg = "000" + " " + str(int(-self.finalSteeringAngle_deg))
-                    #msg = str(accel) + " " + str(int(-self.finalSteeringAngle_deg))
-                    #self.clientSocket.sendto(bytes(msg, "utf-8"), (self.UDPServer_IP, self.UDPServer_Port))
-                    #sleep(ServerConfig.getInstance().MessageDelay)
+                    # msg = str(accel) + " " + str(int(-self.finalSteeringAngle_deg))
+                    # self.clientSocket.sendto(bytes(msg, "utf-8"), (self.UDPServer_IP, self.UDPServer_Port))
+                    # sleep(ServerConfig.getInstance().MessageDelay)
 
                     '''msg = str(int(ServerConfig.getInstance().vehicle_const_speed + 0.25 * abs(self.finalSteeringAngle_deg))) + " " + str(int(-self.finalSteeringAngle_deg))
                     print(f'msg: {msg}')

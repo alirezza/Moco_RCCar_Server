@@ -1,6 +1,6 @@
 import socket
 from time import sleep
-import cv2 as cv
+
 from Configuration import ServerConfig
 from StateLib import *
 
@@ -13,10 +13,9 @@ class StateControlCar(State):
     def __init__(self):
         self.control_active = False
         self.control_active_req = False
-        
+
         self.velocity = 0
         self.angle = 115
-
 
     def next(self):
         return self

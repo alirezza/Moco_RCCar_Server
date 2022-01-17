@@ -1,14 +1,14 @@
-import sys
-from PySide6.QtWidgets import QApplication, QPushButton, QDialog, QVBoxLayout, QLabel, QFileDialog, QSlider
-from PySide6.QtCore import *
 import threading
-import time
 
-from State_ControlCar import StateControlCar
-from State_PathDetect import StatePathDetect
-from StateLib import *
-from State_CornerDetection import StateCornerDetection
+from PySide6.QtCore import *
+from PySide6.QtWidgets import QApplication, QPushButton, QDialog, QVBoxLayout, QLabel, QFileDialog, QSlider
+
 from Configuration import ServerConfig
+from StateLib import *
+from State_ControlCar import StateControlCar
+from State_CornerDetection import StateCornerDetection
+from State_PathDetect import StatePathDetect
+
 
 class LogicLoop:
     killLoop = False
@@ -24,10 +24,12 @@ class LogicLoop:
         self.myStateMachine.currentState.on_leave()
         print("Logic Loop Ended")
 
+
 @Slot()
 def restart_state_machine():
     myLogicThread.myStateMachine.force_next_state(StateCornerDetection())
     print("Restart")
+
 
 @Slot()
 def create_path():
@@ -35,10 +37,13 @@ def create_path():
         myLogicThread.myStateMachine.currentState.set_use_path(True)
         print("Try to create path")
 
+
 @Slot()
 def clear_path():
     if isinstance(myLogicThread.myStateMachine.currentState, StatePathDetect):
         myLogicThread.myStateMachine.currentState.set_use_path(False)
+
+
 @Slot()
 def load_path(widget):
     if isinstance(myLogicThread.myStateMachine.currentState, StatePathDetect):
@@ -55,21 +60,25 @@ def save_path(widget):
         if SaveDialog[0] != '':
             myLogicThread.myStateMachine.currentState.save_trajectory(SaveDialog[0])
 
+
 @Slot()
 def start_car():
     if isinstance(myLogicThread.myStateMachine.currentState, StateControlCar):
         myLogicThread.myStateMachine.currentState.start_car()
+
 
 @Slot()
 def stop_car():
     if isinstance(myLogicThread.myStateMachine.currentState, StateControlCar):
         myLogicThread.myStateMachine.currentState.stop_car()
 
+
 @Slot()
 def set_velocity(vel):
     if isinstance(myLogicThread.myStateMachine.currentState, StateControlCar):
         myLogicThread.myStateMachine.currentState.set_velocity(vel)
     print(vel)
+
 
 class Form(QDialog):
     def __init__(self, parent=None):
@@ -105,14 +114,12 @@ class Form(QDialog):
         self.setLayout(layout)
 
 
-
 # Create the Qt Application
 app = QApplication([])
 
 # Create Thread that runs in parallel to the gui
 myLogicThread = LogicLoop()
 LogicThread = threading.Thread(target=myLogicThread.loop, args=())
-
 
 myDialog = Form()
 myDialog.button1.clicked.connect(restart_state_machine)
@@ -127,10 +134,8 @@ myDialog.statusText.setText("Vehicle Velocity")
 
 myDialog.show()
 
-
 LogicThread.start()
 app.exec()
 
 # If GUI is closed tell thread to close
 myLogicThread.killLoop = True
-
