@@ -65,8 +65,8 @@ class Form(QDialog):
         self.slider2 = QSlider(Qt.Horizontal)
         self.statusText2 = QLabel("Status Label")
 
-        self.slider2.setRange(-300, 300)
-        self.slider2.setTickInterval(37)
+        self.slider2.setRange(0, 180)
+        self.slider2.setTickInterval(1)
         self.slider2.setValue(ServerConfig.getInstance().testingsteeringangle)
 
         self.slider1.setRange(-300, 300)

@@ -41,11 +41,12 @@ class ServerConfig:
     MessageDelay = 0.025  # in sek
 
     # Vehicle
-    vehicle_const_speed = 135
+    vehicle_speed = 135
+
 
     vehicle_wheelbase = 9.75 * 1.15  # Radstand, Einheit: cm  # 1.15
-    vehicle_steerAngle_MAX = 30  # Einheit: deg
-    vehicle_steerAngle_MIN = -30  # s.o.
+    vehicle_steerAngle_MAX = 150  # Einheit: deg
+    vehicle_steerAngle_MIN = 30  # s.o.
 
     steeringAngle_gradient = 70  # Einheit: deg/sek
     sample_time = 0.2  # Abtastzeit (Zeit pro Loop), Einheit: sek
