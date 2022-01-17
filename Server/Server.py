@@ -87,7 +87,7 @@ class Form(QDialog):
 
         self.slider1.setRange(0, 150)
         self.slider1.setTickInterval(1)
-        self.slider1.setValue(ServerConfig.getInstance().vehicle_const_speed)
+        self.slider1.setValue(ServerConfig.getInstance().vehicle_speed)
 
         # Create layout and add widgets
         layout = QVBoxLayout()

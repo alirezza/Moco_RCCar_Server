@@ -8,7 +8,6 @@ import time
 
 
 class StatePathDetect(State):
-
     pts1_list = 0
     path_list = 0
     path_list_cm = 0
@@ -35,8 +34,8 @@ class StatePathDetect(State):
         if self.usepath:
             return StateControlCar(self.pts1_list, self.path_list)
 
-        #if(type == 1) return StateControlCar(pts, prerecordedpath)
-        #if(type == 2) return StateControlCar(pts, edgedetectionpath)
+        # if(type == 1) return StateControlCar(pts, prerecordedpath)
+        # if(type == 2) return StateControlCar(pts, edgedetectionpath)
 
         else:
             return self
@@ -57,17 +56,19 @@ class StatePathDetect(State):
             cv.imshow('Warped Img', warped_img)
             k = cv.waitKey(20) & 0xFF
 
-
     def on_enter(self):
 
         print("Enter Path Detect State")
 
         pts1 = np.asarray(self.pts1_list, dtype=np.float32)
-        pts2 = np.float32([[0, 0], [self.img_width, 0], [0, self.img_height], [self.img_width, self.img_height]])
+        pts2 = np.float32([[0, 0],
+                           [self.img_width, 0],
+                           [0, self.img_height],
+                           [self.img_width, self.img_height]])
         self.matrix = cv.getPerspectiveTransform(pts1, pts2)
         self.cam = cv.VideoCapture(ServerConfig.getInstance().CamSelect, cv.CAP_DSHOW)
         self.path_list = []
-        self. path_list_cm = []
+        self.path_list_cm = []
 
         # factor for px to distance (cm) ratio
         self.factorX = self.img_width / self.width

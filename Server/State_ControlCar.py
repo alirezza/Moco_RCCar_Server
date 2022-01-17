@@ -56,6 +56,12 @@ class StateControlCar(State):
     def __init__(self, corner, path):
         self.corner_pts = corner
         self.path_pts = path
+        path_pts_toarray = np.array(self.path_pts)
+        new_path_pts = np.zeros([path_pts_toarray.shape[0], 3], dtype=float, order='C')
+        for i in range(path_pts_toarray.shape[0]):
+            new_path_pts[i] = [path_pts_toarray[i][0], path_pts_toarray[i][1], 0]
+        for i in range(path_pts_toarray.shape[0]):
+            path_pts_toarray[i] = np.matmul(new_path_pts[i], self.matrix)
         self.path_pts_cm = []
         self.control_active = False
         self.control_active_req = False
@@ -141,7 +147,6 @@ class StateControlCar(State):
                 if start_index < 0:
                     start_index = len(self.path_pts) + start_index
 
-                # if len(self.path_pts)-1 < ServerConfig.getInstance().lookahead_n:
                 if start_index + 1 + ServerConfig.getInstance().lookahead_n > len(self.path_pts) - 1:
                     self.current_path = self.path_pts[start_index:len(self.path_pts)] + self.path_pts[
                                                                                         0:ServerConfig.getInstance().lookahead_n - (
@@ -284,37 +289,47 @@ class StateControlCar(State):
                 if self.control_active_req is not self.control_active:
                     self.control_active = self.control_active_req
                     if self.control_active:
-                        msg = "on"
+                        for i in range(10):
+                            msg = str(170).zfill(3) + " " + str(115).zfill(3)
+                            self.clientSocket.sendto(bytes(msg, "utf-8"), (self.UDPServer_IP, self.UDPServer_Port))
+                            sleep(ServerConfig.getInstance().MessageDelay)
                     # send Anfahrreq
                     else:
-                        msg = "off"
+                        msg = str(0).zfill(3) + " " + str(115).zfill(3)
+                        self.clientSocket.sendto(bytes(msg, "utf-8"), (self.UDPServer_IP, self.UDPServer_Port))
+                        sleep(ServerConfig.getInstance().MessageDelay)
 
-                    self.clientSocket.sendto(bytes(msg, "utf-8"), (self.UDPServer_IP, self.UDPServer_Port))
-                    sleep(ServerConfig.getInstance().MessageDelay)
-                    msg = "255 " + str(int(-self.finalSteeringAngle_deg))
-                    self.clientSocket.sendto(bytes(str(msg), "utf-8"), (self.UDPServer_IP, self.UDPServer_Port))
-                    sleep(ServerConfig.getInstance().MessageDelay)
+
+                    #msg = "255 " + str(int(-self.finalSteeringAngle_deg))
+                    #self.clientSocket.sendto(bytes(str(msg), "utf-8"), (self.UDPServer_IP, self.UDPServer_Port))
+                    #sleep(ServerConfig.getInstance().MessageDelay)
                 elif self.control_active:
                     # 9 Sende Daten (Querablagefehler, Winkeldifferenz, Krümmung)sg = str(dY_m, dPsi_rad/dPsi_deg, K_minv)  # "Winkel, Geschwindigkeit" muss formatiert sein
-                    '''self.driveCounter += 1
-                    if self.driveCounter == 3:
-                        self.driveCounter = 0
-                        msg = "255 " + str(int(-self.finalSteeringAngle_deg))
-                        self.clientSocket.sendto(bytes(str(msg), "utf-8"), (self.UDPServer_IP, self.UDPServer_Port))
-                        sleep(ServerConfig.getInstance().MessageDelay)'''
 
-                    accel = ServerConfig.getInstance().vehicle_const_speed + int(
-                        pow(abs(self.finalSteeringAngle_deg) * 0.1, 2.5))
+                    #accel = ServerConfig.getInstance().vehicle_speed + int(
+                    #    pow(abs(self.finalSteeringAngle_deg) * 0.1, 2.5))
+                    accel = self.velocity
+                    angle = self.finalSteeringAngle_deg
+
+                    print(f'accel: {accel}')
+                    print(f'angle: {angle}')
+
+                    msg = str(accel).zfill(3) + " " + str(angle).zfill(3)
+                    self.clientSocket.sendto(bytes(msg, "utf-8"), (self.UDPServer_IP, self.UDPServer_Port))
+                    sleep(ServerConfig.getInstance().MessageDelay)
+
+
+
                     # accel = ServerConfig.getInstance().vehicle_const_speed + int(abs(self.finalSteeringAngle_deg) * 0.3)
                     # accel = 100
                     # print(accel)
                     # accel = self.velocity + int(pow(abs(self.finalSteeringAngle_deg) * 0.2, 2))
                     # print(self.velocity)
-                    print(f'accel: {accel}')
+                    #print(f'accel: {accel}')
                     # msg = "000" + " " + str(int(-self.finalSteeringAngle_deg))
-                    msg = str(accel) + " " + str(int(-self.finalSteeringAngle_deg))
-                    self.clientSocket.sendto(bytes(msg, "utf-8"), (self.UDPServer_IP, self.UDPServer_Port))
-                    sleep(ServerConfig.getInstance().MessageDelay)
+                    #msg = str(accel) + " " + str(int(-self.finalSteeringAngle_deg))
+                    #self.clientSocket.sendto(bytes(msg, "utf-8"), (self.UDPServer_IP, self.UDPServer_Port))
+                    #sleep(ServerConfig.getInstance().MessageDelay)
 
                     '''msg = str(int(ServerConfig.getInstance().vehicle_const_speed + 0.25 * abs(self.finalSteeringAngle_deg))) + " " + str(int(-self.finalSteeringAngle_deg))
                     print(f'msg: {msg}')
@@ -350,8 +365,9 @@ class StateControlCar(State):
         print(self.path_pts_cm)
 
     def on_leave(self):
-        msg = "off"
+        msg = str(0).zfill(3) + " " + str(115).zfill(3)
         self.clientSocket.sendto(bytes(msg, "utf-8"), (self.UDPServer_IP, self.UDPServer_Port))
+        sleep(ServerConfig.getInstance().MessageDelay)
         cv.destroyAllWindows()
         self.cam.release()
         print("Leaving Control Car State")
