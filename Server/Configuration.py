@@ -3,15 +3,15 @@ class ServerConfig:
 
     # Detection
     CamSelect = 2
-    TrackWidth = 228  # cm
-    TrackHeight = 137.5  # cm
+    TrackWidth = 100  # cm
+    TrackHeight = 300  # cm
 
-    if TrackWidth > TrackHeight:
-        FrameWidth = int(900 * TrackWidth / TrackHeight)
-        FrameHeight = 900
-    elif TrackWidth < TrackHeight:
-        FrameWidth = 1080
-        FrameHeight = 1080 * int(TrackHeight / TrackWidth)  # 1080
+  #  if TrackWidth > TrackHeight:
+    FrameWidth = 1080
+    FrameHeight = 900
+ #   elif TrackWidth < TrackHeight:
+   #     FrameWidth = 1080
+  #      FrameHeight = 1080 * int(TrackHeight / TrackWidth)  # 1080
     # Control
     lookback_n = 1
     lookahead_n = 4
@@ -43,10 +43,9 @@ class ServerConfig:
     # Vehicle
     vehicle_speed = 135
 
-
     vehicle_wheelbase = 9.75 * 1.15  # Radstand, Einheit: cm  # 1.15
-    vehicle_steerAngle_MAX = 150  # Einheit: deg
-    vehicle_steerAngle_MIN = 30  # s.o.
+    vehicle_steerAngle_MAX = 30  # Einheit: deg
+    vehicle_steerAngle_MIN = -30  # s.o.
 
     steeringAngle_gradient = 70  # Einheit: deg/sek
     sample_time = 0.2  # Abtastzeit (Zeit pro Loop), Einheit: sek

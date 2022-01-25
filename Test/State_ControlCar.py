@@ -35,19 +35,20 @@ class StateControlCar(State):
 
         if self.control_active_req is not self.control_active:
             self.control_active = self.control_active_req
+            # sende Anfahrreq
             if self.control_active:
                 for i in range(10):
-                    msg = str(170).zfill(3) + " " + str(115).zfill(3)
+                    msg = str(200).zfill(3) + " " + str(115).zfill(3)
                     self.clientSocket.sendto(bytes(msg, "utf-8"), (self.UDPServer_IP, self.UDPServer_Port))
                     sleep(ServerConfig.getInstance().MessageDelay)
-            # send Anfahrreq
+            # sende Stopreq
             else:
                 msg = str(0).zfill(3) + " " + str(115).zfill(3)
                 self.clientSocket.sendto(bytes(msg, "utf-8"), (self.UDPServer_IP, self.UDPServer_Port))
                 sleep(ServerConfig.getInstance().MessageDelay)
 
         elif self.control_active:
-            # 9 Sende Daten (Querablagefehler, Winkeldifferenz, Krümmung)sg = str(dY_m, dPsi_rad/dPsi_deg, K_minv)  # "Winkel, Geschwindigkeit" muss formatiert sein
+            # 9 Sende Daten (Querablagefehler, Winkeldifferenz, Krümmung)sg = str(dY_m, dPsi_rad/dPsi_deg, K_minv)  # "Geschwindigkeit, Winkel" muss formatiert sein
 
             accel = self.velocity
             angle = self.angle

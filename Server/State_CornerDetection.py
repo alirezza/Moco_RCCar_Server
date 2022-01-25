@@ -84,7 +84,7 @@ class StateCornerDetection(State):
     def on_enter(self):
 
         self.tagID_topLeft = 65
-        self.tagID_topRight = 84
+        self.tagID_topRight = 1
         self.tagID_bottomRight = 0
         self.tagID_bottomLeft = 63
 
