@@ -3,15 +3,15 @@ class ServerConfig:
 
     # Detection
     CamSelect = 2
-    TrackWidth = 100  # cm
-    TrackHeight = 300  # cm
+    TrackWidth = 115  # cm
+    TrackHeight = 220  # cm
 
-  #  if TrackWidth > TrackHeight:
-    FrameWidth = 1080
-    FrameHeight = 900
- #   elif TrackWidth < TrackHeight:
-   #     FrameWidth = 1080
-  #      FrameHeight = 1080 * int(TrackHeight / TrackWidth)  # 1080
+    if TrackWidth > TrackHeight:
+        FrameWidth = int(640 * TrackWidth / TrackHeight)
+        FrameHeight = 640
+    elif TrackWidth < TrackHeight:
+        FrameWidth = 480
+        FrameHeight = int(480 * TrackHeight / TrackWidth)
     # Control
     lookback_n = 1
     lookahead_n = 4

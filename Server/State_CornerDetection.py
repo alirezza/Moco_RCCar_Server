@@ -77,6 +77,8 @@ class StateCornerDetection(State):
 
     def next(self):
         if self.detectionComplete:
+            time.sleep(1)
+            cv.destroyWindow('Corner Tags')
             return StatePathDetect(self.pts1_list)
         else:
             return self
@@ -84,7 +86,7 @@ class StateCornerDetection(State):
     def on_enter(self):
 
         self.tagID_topLeft = 65
-        self.tagID_topRight = 1
+        self.tagID_topRight = 85
         self.tagID_bottomRight = 0
         self.tagID_bottomLeft = 63
 
@@ -106,5 +108,6 @@ class StateCornerDetection(State):
         print("Enter Complete")
 
     def on_leave(self):
+
         self.cam.release()
         print("Corner Detection Complete")

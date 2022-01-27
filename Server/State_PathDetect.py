@@ -21,8 +21,8 @@ class StatePathDetect(State):
     factorY = 0
 
     # real dimensions (cm)
-    width = ServerConfig.getInstance().TrackWidth  # 58.8
-    height = ServerConfig.getInstance().TrackHeight  # 65.5
+    width = ServerConfig.getInstance().TrackWidth
+    height = ServerConfig.getInstance().TrackHeight
 
     usepath = False
 
@@ -45,8 +45,12 @@ class StatePathDetect(State):
         ret, new_frame = self.cam.read()
 
         if ret:
-            warped_img = cv.warpPerspective(new_frame, self.matrix, (self.img_width, self.img_height))
-
+            if self.img_height < self.img_width:
+                warped_img = cv.warpPerspective(new_frame, self.matrix, (self.img_width, (self.img_height * int(self.img_height/self.img_width))))
+            else:
+                warped_img = cv.warpPerspective(new_frame, self.matrix, (self.img_width, (self.img_height * int(self.img_width/self.img_height))))
+            self.draw_tag_border(warped_img)
+            self.draw_grid(warped_img)
             for point in self.path_list:
                 cv.circle(warped_img, (point[0], point[1]), 4, (0, 255, 255), -1)
 
@@ -117,3 +121,62 @@ class StatePathDetect(State):
             self.path_list = pickle.load(handle)
             print("Path Loaded")
             # print(self.path_list)
+
+    def draw_grid(self,img, line_color=(0, 255, 0), thickness=1, type_=cv.LINE_AA, x_pxstep=int(150/2), y_pxstep=int(150/2)):
+        '''(ndarray, 3-tuple, int, int) -> void
+        draw gridlines on img
+        line_color:
+            BGR representation of colour
+        thickness:
+            line thickness
+        type:
+            8, 4 or cv2.LINE_AA
+        x_pxstep:
+            grid line frequency in pixels
+        y_pxstep:
+            grid line frequency in pixels
+        '''
+        x = x_pxstep
+        y = y_pxstep
+
+        while x < img.shape[1]:
+            cv.line(img, (x, 0), (x, img.shape[0]), color=line_color, lineType=type_, thickness=thickness)
+            x += x_pxstep
+
+        while y < img.shape[0]:
+            cv.line(img, (0, y), (img.shape[1], y), color=line_color, lineType=type_, thickness=thickness)
+            y += y_pxstep
+
+    def draw_tag_border(self,img):
+        arucoDict = cv.aruco.Dictionary_get(cv.aruco.DICT_ARUCO_ORIGINAL)
+        arucoParams = cv.aruco.DetectorParameters_create()
+        corners, ids, rejectedCandidates = cv.aruco.detectMarkers(img, arucoDict,
+                                                                                    parameters=arucoParams)
+        if len(corners) > 0:
+            # flatten the ArUco IDs list
+            ids = ids.flatten()
+            # loop over the detected ArUCo corners
+            for (markerCorner, markerID) in zip(corners, ids):
+                # extract the marker corners (which are always returned in
+                # top-left, top-right, bottom-right, and bottom-left order)
+                corners = markerCorner.reshape((4, 2))
+                (topLeft, topRight, bottomRight, bottomLeft) = corners
+                # convert each of the (x, y)-coordinate pairs to integers
+                topRight = (int(topRight[0]), int(topRight[1]))
+                bottomRight = (int(bottomRight[0]), int(bottomRight[1]))
+                bottomLeft = (int(bottomLeft[0]), int(bottomLeft[1]))
+                topLeft = (int(topLeft[0]), int(topLeft[1]))
+                # draw the bounding box of the ArUCo detection
+                cv.line(img, topLeft, topRight, (255, 0, 0), 2)
+                cv.line(img, topRight, bottomRight, (255, 0, 0), 2)
+                cv.line(img, bottomRight, bottomLeft, (255, 0, 0), 2)
+                cv.line(img, bottomLeft, topLeft, (255, 0, 0), 2)
+                # compute and draw the center (x, y)-coordinates of the ArUco
+                # marker
+                cX = int((topLeft[0] + bottomRight[0]) / 2.0)
+                cY = int((topLeft[1] + bottomRight[1]) / 2.0)
+                cv.circle(img, (cX, cY), 4, (0, 0, 255), -1)
+                # draw the ArUco marker ID on the image
+                cv.putText(img, str(markerID),
+                            (topLeft[0], topLeft[1] - 15), cv.FONT_HERSHEY_SIMPLEX,
+                            0.5, (0, 255, 0), 2)

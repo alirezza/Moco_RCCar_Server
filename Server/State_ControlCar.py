@@ -65,19 +65,27 @@ class StateControlCar(State):
         self.path_pts_cm = []
         self.control_active = False
         self.control_active_req = False
-        self.velocity = 130
+        self.velocity = ServerConfig.getInstance().vehicle_speed
 
     def next(self):
         return self
 
     def start_car(self):
+        for i in range(10):
+            msg = str(200).zfill(3) + " " + str(0).zfill(3)
+            self.clientSocket.sendto(bytes(msg, "utf-8"), (self.UDPServer_IP, self.UDPServer_Port))
+            sleep(ServerConfig.getInstance().MessageDelay)
+
         self.control_active_req = True
 
     def stop_car(self):
+        msg = str(0).zfill(3) + " " + str(0).zfill(3)
+        self.clientSocket.sendto(bytes(msg, "utf-8"), (self.UDPServer_IP, self.UDPServer_Port))
+        sleep(ServerConfig.getInstance().MessageDelay)
         self.control_active_req = False
 
     def set_velocity(self, v):
-        self.velocity = max(min(255, v), 0)
+        self.velocity = int(v)
 
     def run(self):
 
@@ -301,7 +309,7 @@ class StateControlCar(State):
                     self.control_active = self.control_active_req
                     # sende Anfahrreq
                     if self.control_active_req:
-                        for i in range(10):
+                        for i in range(2):
                             msg = str(200).zfill(3) + " " + str(0).zfill(3)
                             self.clientSocket.sendto(bytes(msg, "utf-8"), (self.UDPServer_IP, self.UDPServer_Port))
                             sleep(ServerConfig.getInstance().MessageDelay)
