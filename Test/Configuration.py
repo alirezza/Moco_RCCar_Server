@@ -7,8 +7,9 @@ class ServerConfig:
     MessageDelay = 0.025  # in sek
 
     # Vehicle
-    vehicle_speed = 135
-    testingsteeringangle = 37
+    vehicle_speed = 0
+    testingsteeringangle = 35
+    actual_speed = 0
 
     @staticmethod
     def getInstance():
