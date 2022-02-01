@@ -92,7 +92,7 @@ class StateCornerDetection(State):
 
         self.dictionary = cv.aruco.Dictionary_get(cv.aruco.DICT_ARUCO_ORIGINAL)
         self.parameters = cv.aruco.DetectorParameters_create()
-        self.cam = cv.VideoCapture(ServerConfig.getInstance().CamSelect, cv.CAP_DSHOW)
+        self.cam = cv.VideoCapture(ServerConfig.getInstance().CamSelect)
 
         '''self.cam.set(cv.CAP_PROP_FRAME_WIDTH, ServerConfig.getInstance().FrameWidth)
         self.cam.set(cv.CAP_PROP_FRAME_HEIGHT, ServerConfig.getInstance().FrameHeight)'''

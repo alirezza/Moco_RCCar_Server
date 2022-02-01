@@ -309,10 +309,9 @@ class StateControlCar(State):
                     self.control_active = self.control_active_req
                     # sende Anfahrreq
                     if self.control_active_req:
-                        for i in range(2):
-                            msg = str(200).zfill(3) + " " + str(0).zfill(3)
-                            self.clientSocket.sendto(bytes(msg, "utf-8"), (self.UDPServer_IP, self.UDPServer_Port))
-                            sleep(ServerConfig.getInstance().MessageDelay)
+                        msg = str(200).zfill(3) + " " + str(0).zfill(3)
+                        self.clientSocket.sendto(bytes(msg, "utf-8"), (self.UDPServer_IP, self.UDPServer_Port))
+                        sleep(ServerConfig.getInstance().MessageDelay)
                     # sende Stopreq
                     else:
                         msg = str(0).zfill(3) + " " + str(0).zfill(3)
@@ -359,7 +358,7 @@ class StateControlCar(State):
 
         print("Enter Control State")
 
-        self.cam = cv.VideoCapture(ServerConfig.getInstance().CamSelect, cv.CAP_DSHOW)
+        self.cam = cv.VideoCapture(ServerConfig.getInstance().CamSelect)
         self.cam.set(cv.CAP_PROP_FRAME_WIDTH, ServerConfig.getInstance().FrameWidth)
         self.cam.set(cv.CAP_PROP_FRAME_HEIGHT, ServerConfig.getInstance().FrameHeight)
 

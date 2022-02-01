@@ -2,9 +2,10 @@ class ServerConfig:
     __instance = None
 
     # Detection
-    CamSelect = 2
-    TrackWidth = 115  # cm
-    TrackHeight = 220  # cm
+
+    CamSelect = 'http://192.168.4.3:8080/video'
+    TrackWidth = 114  # 114 cm
+    TrackHeight = 255 # 255 cm
 
     if TrackWidth > TrackHeight:
         FrameWidth = int(640 * TrackWidth / TrackHeight)

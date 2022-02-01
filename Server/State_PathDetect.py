@@ -45,10 +45,7 @@ class StatePathDetect(State):
         ret, new_frame = self.cam.read()
 
         if ret:
-            if self.img_height < self.img_width:
-                warped_img = cv.warpPerspective(new_frame, self.matrix, (self.img_width, (self.img_height * int(self.img_height/self.img_width))))
-            else:
-                warped_img = cv.warpPerspective(new_frame, self.matrix, (self.img_width, (self.img_height * int(self.img_width/self.img_height))))
+            warped_img = cv.warpPerspective(new_frame, self.matrix, (self.img_width, self.img_height))
             self.draw_tag_border(warped_img)
             self.draw_grid(warped_img)
             for point in self.path_list:
@@ -70,7 +67,7 @@ class StatePathDetect(State):
                            [0, self.img_height],
                            [self.img_width, self.img_height]])
         self.matrix = cv.getPerspectiveTransform(pts1, pts2)
-        self.cam = cv.VideoCapture(ServerConfig.getInstance().CamSelect, cv.CAP_DSHOW)
+        self.cam = cv.VideoCapture(ServerConfig.getInstance().CamSelect)
         self.path_list = []
         self.path_list_cm = []
 
@@ -122,7 +119,7 @@ class StatePathDetect(State):
             print("Path Loaded")
             # print(self.path_list)
 
-    def draw_grid(self,img, line_color=(0, 255, 0), thickness=1, type_=cv.LINE_AA, x_pxstep=int(150/2), y_pxstep=int(150/2)):
+    def draw_grid(self,img, line_color=(0, 255, 0), thickness=1, type_=cv.LINE_AA, x_pxstep=int(15*(img_width/width)), y_pxstep=int(15*(img_height/height))):
         '''(ndarray, 3-tuple, int, int) -> void
         draw gridlines on img
         line_color:
