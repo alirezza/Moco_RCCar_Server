@@ -71,13 +71,13 @@ class Form(QDialog):
         self.statusText3 = QLabel("Status Label")
         self.inputfield = QLineEdit()
 
-        self.slider2.setRange(0, 180)
+        self.slider2.setRange(-30, 30)
         self.slider2.setTickInterval(1)
         self.slider2.setValue(ServerConfig.getInstance().testingsteeringangle)
 
-        self.slider1.setRange(-255, 255)
-        self.slider1.setTickInterval(1)
-        self.slider1.setValue(ServerConfig.getInstance().vehicle_speed)
+        self.slider1.setRange(0, 170)
+        self.slider1.setTickInterval(5)
+        self.slider1.setValue(ServerConfig.getInstance().vehicle_const_speed)
 
         # Create layout and add widgets
         layout = QVBoxLayout()
@@ -110,7 +110,7 @@ myDialog.slider1.valueChanged.connect(lambda: set_velocity(myDialog.slider1.valu
 myDialog.statusText1.setText("Vehicle Velocity")
 myDialog.slider2.valueChanged.connect(lambda: set_angle(myDialog.slider2.value()))
 myDialog.statusText2.setText("Vehicle Angle")
-myDialog.statusText3.setText(str(ServerConfig.getInstance().vehicle_speed))
+myDialog.statusText3.setText(str(ServerConfig.getInstance().vehicle_const_speed))
 
 myDialog.show()
 

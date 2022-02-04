@@ -65,13 +65,13 @@ class StateControlCar(State):
         self.path_pts_cm = []
         self.control_active = False
         self.control_active_req = False
-        self.velocity = ServerConfig.getInstance().vehicle_speed
+        self.velocity = ServerConfig.getInstance().vehicle_const_speed
 
     def next(self):
         return self
 
     def start_car(self):
-        for i in range(10):
+        for i in range(3):
             msg = str(200).zfill(3) + " " + str(0).zfill(3)
             self.clientSocket.sendto(bytes(msg, "utf-8"), (self.UDPServer_IP, self.UDPServer_Port))
             sleep(ServerConfig.getInstance().MessageDelay)
@@ -328,10 +328,21 @@ class StateControlCar(State):
                     accel = self.velocity
                     angle = self.finalSteeringAngle_deg
 
+                    if(abs(angle) * ServerConfig.getInstance().vehicle_curv_factor) < ServerConfig.getInstance().vehicle_curv_min:
+                        accel += ServerConfig.getInstance().vehicle_curv_min
+                    if(abs(angle) * ServerConfig.getInstance().vehicle_curv_factor) > ServerConfig.getInstance().vehicle_curv_max:
+                        accel += ServerConfig.getInstance().vehicle_curv_max
+                    else:
+                        accel += (abs(angle) * ServerConfig.getInstance().vehicle_curv_factor)
+
+                    accel = math.trunc(accel)
+                    angle = math.trunc(angle)
                     print(f'accel: {accel}')
                     print(f'angle: {angle}')
 
                     msg = str(accel).zfill(3) + " " + str(angle).zfill(3)
+
+                    #msg = str(accel).zfill(3) + " " + str(angle).zfill(3)
                     self.clientSocket.sendto(bytes(msg, "utf-8"), (self.UDPServer_IP, self.UDPServer_Port))
                     sleep(ServerConfig.getInstance().MessageDelay)
 
@@ -380,7 +391,7 @@ class StateControlCar(State):
         print(self.path_pts_cm)
 
     def on_leave(self):
-        msg = str(0).zfill(3) + " " + str(115).zfill(3)
+        msg = str(0).zfill(3) + " " + str(0).zfill(3)
         self.clientSocket.sendto(bytes(msg, "utf-8"), (self.UDPServer_IP, self.UDPServer_Port))
         sleep(ServerConfig.getInstance().MessageDelay)
         cv.destroyAllWindows()

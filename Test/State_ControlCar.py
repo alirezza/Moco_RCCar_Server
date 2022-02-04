@@ -15,7 +15,7 @@ class StateControlCar(State):
         self.control_active_req = False
         
         self.velocity = 0
-        self.angle = 115
+        self.angle = 0
 
 
     def next(self):
@@ -43,7 +43,7 @@ class StateControlCar(State):
             # sende Anfahrreq
             if self.control_active:
 
-                for i in range(10):
+                for i in range(3):
                     msg = str(200).zfill(3) + " " + str(115).zfill(3)
                     self.clientSocket.sendto(bytes(msg, "utf-8"), (self.UDPServer_IP, self.UDPServer_Port))
                     sleep(ServerConfig.getInstance().MessageDelay)

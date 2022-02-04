@@ -77,7 +77,6 @@ class StateCornerDetection(State):
 
     def next(self):
         if self.detectionComplete:
-            time.sleep(1)
             cv.destroyWindow('Corner Tags')
             return StatePathDetect(self.pts1_list)
         else:

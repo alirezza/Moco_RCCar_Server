@@ -2,12 +2,12 @@ class ServerConfig:
     __instance = None
 
     # WiFi
-    UDPServer_IP = "192.168.4.1"
+    UDPServer_IP =  "192.168.43.110"
     UDPServer_Port = 8888
     MessageDelay = 0.025  # in sek
 
     # Vehicle
-    vehicle_speed = 0
+    vehicle_const_speed = 0
     testingsteeringangle = 35
     actual_speed = 0
 
