@@ -3,9 +3,10 @@ class ServerConfig:
 
     # Detection
 
-    CamSelect = 'http://192.168.43.1:8080/video'
+    CamSelect = 1
+        #'http://192.168.223.99:8080/video'
     TrackWidth = 114  # 114 cm
-    TrackHeight = 255 # 255 cm
+    TrackHeight = 255  # 255 cm
 
     if TrackWidth > TrackHeight:
         FrameWidth = int(640 * TrackWidth / TrackHeight)
@@ -37,15 +38,15 @@ class ServerConfig:
     heading_err_gain = 0.45  # Faktor auf Winkel
 
     # WiFi
-    UDPServer_IP =  "192.168.43.110" #"192.168.4.1"
+    UDPServer_IP = "192.168.4.1"  #  "192.168.43.110"
     UDPServer_Port = 8888
     MessageDelay = 0.025  # in sek
 
     # Vehicle
-    vehicle_const_speed = 70
-    vehicle_curv_factor = 1/3
+    vehicle_const_speed = 90
+    vehicle_curv_factor = 2 / 3
     vehicle_curv_max = 10
-    vehicle_curv_min = 2
+    vehicle_curv_min = 0
 
     vehicle_wheelbase = 9.75 * 1.15  # Radstand, Einheit: cm  # 1.15
     vehicle_steerAngle_MAX = 30  # Einheit: deg

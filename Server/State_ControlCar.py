@@ -12,6 +12,8 @@ class StateControlCar(State):
     cam = 0
     matrix = 0
 
+    check_i = 5
+
     img_width = ServerConfig.getInstance().FrameWidth
     img_height = ServerConfig.getInstance().FrameHeight
 
@@ -72,7 +74,7 @@ class StateControlCar(State):
 
     def start_car(self):
         for i in range(3):
-            msg = str(200).zfill(3) + " " + str(0).zfill(3)
+            msg = str(0).zfill(3) + " " + str(0).zfill(3)
             self.clientSocket.sendto(bytes(msg, "utf-8"), (self.UDPServer_IP, self.UDPServer_Port))
             sleep(ServerConfig.getInstance().MessageDelay)
 
@@ -94,7 +96,7 @@ class StateControlCar(State):
 
         if ret:
             track_img = cv.warpPerspective(new_frame, self.matrix, (self.img_width, self.img_height))
-            #track_img = cv.warpPerspective(new_frame,self.matrix,900,1080)
+            # track_img = cv.warpPerspective(new_frame,self.matrix,900,1080)
             carMarkerCorners, carMarkerIds, rejectedCandidates = cv.aruco.detectMarkers(track_img, self.dictionary,
                                                                                         parameters=self.parameters)
             '''for point in self.path_pts:
@@ -132,6 +134,7 @@ class StateControlCar(State):
                             self.lastFigure = carFigure
 
                             cv.polylines(track_img, [np.array(self.lastFigure)], True, (255, 0, 0), 3)
+                            cv.polylines(track_img, [np.array(self.path_pts)], True, (0, 255, 0), 3)
 
                             # calculate heading angle
                             if not (topLeft[0] == bottomLeft[0] and topLeft[1] == bottomLeft[1]):
@@ -156,11 +159,30 @@ class StateControlCar(State):
 
             # 3 Ermittle Referenzpunkt (nähester Punkt) auf Pfad
             if self.carCoordinateX_cm > 0 and self.carCoordinateY_cm > 0:
-                deltaCoordinate = [
-                    (path_pt[0] - self.carCoordinateX_cm, path_pt[1] - self.carCoordinateY_cm) for
-                    path_pt in self.path_pts_cm]
-                deltaDistance = [round(pow(distance[0], 2) + pow(distance[1], 2), 2) for distance in deltaCoordinate]
-                self.index = deltaDistance.index(min(deltaDistance))
+                if (not self.control_active) or (self.check_i == 0):
+                    self.check_i = 10
+                    deltaCoordinate = [
+                        (path_pt[0] - self.carCoordinateX_cm, path_pt[1] - self.carCoordinateY_cm) for
+                        path_pt in self.path_pts_cm]
+                    deltaDistance = [round(pow(distance[0], 2) + pow(distance[1], 2), 2) for distance in
+                                     deltaCoordinate]
+                    self.index = deltaDistance.index(min(deltaDistance))
+                    print(self.index)
+                else:
+                    self.check_i -= 1
+                    print("before " + str(self.index))
+                    max_index = self.path_pts_cm.index(self.path_pts_cm[-1])
+                    paths = []
+                    for i in range(10):
+                        paths.append(self.path_pts_cm[(i + self.index) % max_index])
+                    deltaCoordinate = [
+                        (path_pt[0] - self.carCoordinateX_cm, path_pt[1] - self.carCoordinateY_cm) for
+                        path_pt in paths]
+                    deltaDistance = [round(pow(distance[0], 2) + pow(distance[1], 2), 2) for distance in
+                                     deltaCoordinate]
+                    temp_index = deltaDistance.index(min(deltaDistance))
+                    self.index = temp_index + self.index
+                    print("after " + str(self.index))
 
                 # 4 Punkte vor und nach Referenzpunkt
                 start_index = self.index - ServerConfig.getInstance().lookback_n
@@ -169,10 +191,10 @@ class StateControlCar(State):
                 if start_index + 1 + ServerConfig.getInstance().lookahead_n > len(self.path_pts) - 1:
                     self.current_path = self.path_pts[start_index:len(self.path_pts)] + self.path_pts[
                                                                                         0:ServerConfig.getInstance().lookahead_n - (
-                                                                                                    len(self.path_pts) - 1 - self.index)]
+                                                                                                len(self.path_pts) - 1 - self.index)]
                     self.current_path_cm = self.path_pts_cm[start_index:len(self.path_pts)] + self.path_pts_cm[
                                                                                               0:ServerConfig.getInstance().lookahead_n - (
-                                                                                                          len(self.path_pts) - 1 - self.index)]
+                                                                                                      len(self.path_pts) - 1 - self.index)]
                 else:
                     self.current_path = self.path_pts[
                                         start_index:self.index + ServerConfig.getInstance().lookahead_n + 1]
@@ -230,7 +252,7 @@ class StateControlCar(State):
                     np.arctan(np.polyval(coeffsPsi_flipped, ServerConfig.getInstance().Preview_Dist_K_B_m)))
 
                 K_minv = (dPsi_radB - dPsi_radA) / (
-                            ServerConfig.getInstance().Preview_Dist_K_B_m - ServerConfig.getInstance().Preview_Dist_K_A_m)  # Krümmung
+                        ServerConfig.getInstance().Preview_Dist_K_B_m - ServerConfig.getInstance().Preview_Dist_K_A_m)  # Krümmung
                 # Einheit, K: rad / cm
                 # print(f'dY: {dY_m}, dPsi_deg: {dPsi_deg}, K_minv: {K_minv}')
 
@@ -269,7 +291,7 @@ class StateControlCar(State):
                 diff_steerAngle = steerAngle_req - self.finalSteeringAngle_deg
                 if abs(diff_steerAngle) > self.dSteeringAngle_allowed:
                     self.finalSteeringAngle_deg = self.finalSteeringAngle_deg + (
-                                self.dSteeringAngle_allowed * np.sign(diff_steerAngle))
+                            self.dSteeringAngle_allowed * np.sign(diff_steerAngle))
                 else:
                     self.finalSteeringAngle_deg = steerAngle_req
                 cv.putText(track_img,
@@ -328,21 +350,23 @@ class StateControlCar(State):
                     accel = self.velocity
                     angle = self.finalSteeringAngle_deg
 
-                    if(abs(angle) * ServerConfig.getInstance().vehicle_curv_factor) < ServerConfig.getInstance().vehicle_curv_min:
+                    if (
+                            abs(angle) * ServerConfig.getInstance().vehicle_curv_factor) < ServerConfig.getInstance().vehicle_curv_min:
                         accel += ServerConfig.getInstance().vehicle_curv_min
-                    if(abs(angle) * ServerConfig.getInstance().vehicle_curv_factor) > ServerConfig.getInstance().vehicle_curv_max:
+                    if (
+                            abs(angle) * ServerConfig.getInstance().vehicle_curv_factor) > ServerConfig.getInstance().vehicle_curv_max:
                         accel += ServerConfig.getInstance().vehicle_curv_max
                     else:
                         accel += (abs(angle) * ServerConfig.getInstance().vehicle_curv_factor)
 
                     accel = math.trunc(accel)
                     angle = math.trunc(angle)
-                    print(f'accel: {accel}')
-                    print(f'angle: {angle}')
+                    # print(f'accel: {accel}')
+                    # print(f'angle: {angle}')
 
                     msg = str(accel).zfill(3) + " " + str(angle).zfill(3)
 
-                    #msg = str(accel).zfill(3) + " " + str(angle).zfill(3)
+                    # msg = str(accel).zfill(3) + " " + str(angle).zfill(3)
                     self.clientSocket.sendto(bytes(msg, "utf-8"), (self.UDPServer_IP, self.UDPServer_Port))
                     sleep(ServerConfig.getInstance().MessageDelay)
 
