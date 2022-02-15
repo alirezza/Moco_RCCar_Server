@@ -1,4 +1,5 @@
 import sys
+
 from PySide6.QtWidgets import QApplication, QPushButton, QDialog, QVBoxLayout, QLabel, QFileDialog, QSlider
 from PySide6.QtCore import *
 import threading
@@ -9,6 +10,7 @@ from State_PathDetect import StatePathDetect
 from StateLib import *
 from State_CornerDetection import StateCornerDetection
 from Configuration import ServerConfig
+
 
 class LogicLoop:
     killLoop = False
@@ -24,10 +26,12 @@ class LogicLoop:
         self.myStateMachine.currentState.on_leave()
         print("Logic Loop Ended")
 
+
 @Slot()
 def restart_state_machine():
     myLogicThread.myStateMachine.force_next_state(StateCornerDetection())
     print("Restart")
+
 
 @Slot()
 def create_path():
@@ -35,10 +39,13 @@ def create_path():
         myLogicThread.myStateMachine.currentState.set_use_path(True)
         print("Try to create path")
 
+
 @Slot()
 def clear_path():
     if isinstance(myLogicThread.myStateMachine.currentState, StatePathDetect):
         myLogicThread.myStateMachine.currentState.set_use_path(False)
+
+
 @Slot()
 def load_path(widget):
     if isinstance(myLogicThread.myStateMachine.currentState, StatePathDetect):
@@ -55,21 +62,29 @@ def save_path(widget):
         if SaveDialog[0] != '':
             myLogicThread.myStateMachine.currentState.save_trajectory(SaveDialog[0])
 
+
 @Slot()
 def start_car():
     if isinstance(myLogicThread.myStateMachine.currentState, StateControlCar):
         myLogicThread.myStateMachine.currentState.start_car()
 
 @Slot()
+def park_car():
+    if isinstance(myLogicThread.myStateMachine.currentState, StateControlCar):
+        myLogicThread.myStateMachine.currentState.park_car()
+
+@Slot()
 def stop_car():
     if isinstance(myLogicThread.myStateMachine.currentState, StateControlCar):
         myLogicThread.myStateMachine.currentState.stop_car()
+
 
 @Slot()
 def set_velocity(vel):
     if isinstance(myLogicThread.myStateMachine.currentState, StateControlCar):
         myLogicThread.myStateMachine.currentState.set_velocity(vel)
     print(vel)
+
 
 class Form(QDialog):
     def __init__(self, parent=None):
@@ -82,6 +97,7 @@ class Form(QDialog):
         self.button5 = QPushButton("Save Path")
         self.button6 = QPushButton("Start Car")
         self.button7 = QPushButton("Stop Car")
+        self.button8 = QPushButton("Park")
         self.slider1 = QSlider(Qt.Horizontal)
         self.statusText = QLabel("Status Label")
 
@@ -98,12 +114,12 @@ class Form(QDialog):
         layout.addWidget(self.button4)
         layout.addWidget(self.button6)
         layout.addWidget(self.button7)
+        layout.addWidget(self.button8)
         layout.addWidget(self.statusText)
         layout.addWidget(self.slider1)
 
         # Set dialog layout
         self.setLayout(layout)
-
 
 
 # Create the Qt Application
@@ -113,7 +129,6 @@ app = QApplication([])
 myLogicThread = LogicLoop()
 LogicThread = threading.Thread(target=myLogicThread.loop, args=())
 
-
 myDialog = Form()
 myDialog.button1.clicked.connect(restart_state_machine)
 myDialog.button2.clicked.connect(create_path)
@@ -122,15 +137,14 @@ myDialog.button4.clicked.connect(lambda: load_path(myDialog))
 myDialog.button5.clicked.connect(lambda: save_path(myDialog))
 myDialog.button6.clicked.connect(start_car)
 myDialog.button7.clicked.connect(stop_car)
+myDialog.button8.clicked.connect(park_car)
 myDialog.slider1.valueChanged.connect(lambda: set_velocity(myDialog.slider1.value()))
 myDialog.statusText.setText("Vehicle Velocity")
 
 myDialog.show()
-
 
 LogicThread.start()
 app.exec()
 
 # If GUI is closed tell thread to close
 myLogicThread.killLoop = True
-

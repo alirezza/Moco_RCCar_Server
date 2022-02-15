@@ -2,7 +2,7 @@ class ServerConfig:
     __instance = None
 
     # WiFi
-    UDPServer_IP =  "192.168.43.110"
+    UDPServer_IP = "192.168.4.1"  #  "192.168.43.110"
     UDPServer_Port = 8888
     MessageDelay = 0.025  # in sek
 

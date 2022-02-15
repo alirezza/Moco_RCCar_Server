@@ -12,7 +12,7 @@ class StateControlCar(State):
     cam = 0
     matrix = 0
 
-    check_i = 5
+    check_i = 25
 
     img_width = ServerConfig.getInstance().FrameWidth
     img_height = ServerConfig.getInstance().FrameHeight
@@ -59,7 +59,7 @@ class StateControlCar(State):
         self.corner_pts = corner
         self.path_pts = path
         path_pts_toarray = np.array(self.path_pts)
-        new_path_pts = np.zeros([path_pts_toarray.shape[0], 3], dtype=float, order='C')
+        np.zeros([path_pts_toarray.shape[0], 3], dtype=float, order='C')
         # for i in range(path_pts_toarray.shape[0]):
         #    new_path_pts[i] = [path_pts_toarray[i][0], path_pts_toarray[i][1], 0]
         # for i in range(path_pts_toarray.shape[0]):
@@ -71,6 +71,7 @@ class StateControlCar(State):
 
     def next(self):
         return self
+
 
     def start_car(self):
         for i in range(3):
@@ -160,17 +161,17 @@ class StateControlCar(State):
             # 3 Ermittle Referenzpunkt (nähester Punkt) auf Pfad
             if self.carCoordinateX_cm > 0 and self.carCoordinateY_cm > 0:
                 if (not self.control_active) or (self.check_i == 0):
-                    self.check_i = 10
+                    self.check_i = 25
                     deltaCoordinate = [
                         (path_pt[0] - self.carCoordinateX_cm, path_pt[1] - self.carCoordinateY_cm) for
                         path_pt in self.path_pts_cm]
                     deltaDistance = [round(pow(distance[0], 2) + pow(distance[1], 2), 2) for distance in
                                      deltaCoordinate]
                     self.index = deltaDistance.index(min(deltaDistance))
-                    print(self.index)
+
                 else:
-                    self.check_i -= 1
-                    print("before " + str(self.index))
+                    self.check_i -= 0
+
                     max_index = self.path_pts_cm.index(self.path_pts_cm[-1])
                     paths = []
                     for i in range(10):
@@ -181,8 +182,8 @@ class StateControlCar(State):
                     deltaDistance = [round(pow(distance[0], 2) + pow(distance[1], 2), 2) for distance in
                                      deltaCoordinate]
                     temp_index = deltaDistance.index(min(deltaDistance))
-                    self.index = temp_index + self.index
-                    print("after " + str(self.index))
+                    self.index = (temp_index + self.index)%max_index
+
 
                 # 4 Punkte vor und nach Referenzpunkt
                 start_index = self.index - ServerConfig.getInstance().lookback_n
