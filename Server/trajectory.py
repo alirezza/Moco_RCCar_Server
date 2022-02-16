@@ -10,6 +10,7 @@ class RcTrajectoryPoint:
     def __init__(self, x, y, i):
         x = x
         y = y
+        i = i
 
     i = 0
     x = 0
