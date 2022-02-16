@@ -5,6 +5,7 @@ from PySide6.QtCore import *
 import threading
 import time
 
+import trajectory
 from State_ControlCar import StateControlCar
 from State_PathDetect import StatePathDetect
 from StateLib import *
@@ -68,15 +69,21 @@ def start_car():
     if isinstance(myLogicThread.myStateMachine.currentState, StateControlCar):
         myLogicThread.myStateMachine.currentState.start_car()
 
-@Slot()
-def park_car():
-    if isinstance(myLogicThread.myStateMachine.currentState, StateControlCar):
-        myLogicThread.myStateMachine.currentState.park_car()
 
 @Slot()
 def stop_car():
     if isinstance(myLogicThread.myStateMachine.currentState, StateControlCar):
         myLogicThread.myStateMachine.currentState.stop_car()
+
+
+@Slot()
+def park_car():
+    trajectory.RcAdaptiveTrajectory.parking_button_clicked = True
+
+
+@Slot()
+def continue_car():
+    trajectory.RcAdaptiveTrajectory.continue_button_clicked = True
 
 
 @Slot()
@@ -98,6 +105,7 @@ class Form(QDialog):
         self.button6 = QPushButton("Start Car")
         self.button7 = QPushButton("Stop Car")
         self.button8 = QPushButton("Park")
+        self.button9 = QPushButton("Continue")
         self.slider1 = QSlider(Qt.Horizontal)
         self.statusText = QLabel("Status Label")
 
@@ -115,6 +123,7 @@ class Form(QDialog):
         layout.addWidget(self.button6)
         layout.addWidget(self.button7)
         layout.addWidget(self.button8)
+        layout.addWidget(self.button9)
         layout.addWidget(self.statusText)
         layout.addWidget(self.slider1)
 
@@ -138,6 +147,7 @@ myDialog.button5.clicked.connect(lambda: save_path(myDialog))
 myDialog.button6.clicked.connect(start_car)
 myDialog.button7.clicked.connect(stop_car)
 myDialog.button8.clicked.connect(park_car)
+myDialog.button9.clicked.connect(continue_car)
 myDialog.slider1.valueChanged.connect(lambda: set_velocity(myDialog.slider1.value()))
 myDialog.statusText.setText("Vehicle Velocity")
 
