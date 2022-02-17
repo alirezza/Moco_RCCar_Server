@@ -2,6 +2,7 @@ class ServerConfig:
     __instance = None
 
     # Detection
+    corner_trajectory_adr = r'D:\defaults\corner.trj'
 
     CamSelect = 1
     # 'http://192.168.223.99:8080/video'

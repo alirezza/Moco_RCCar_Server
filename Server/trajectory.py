@@ -1,35 +1,42 @@
 import pickle
-import State_PathDetect as pathDetection
+import enum
 
 parkingPoint = 0
 startCruisePoint = 20
-import enum
 
 
 class RcTrajectoryPoint:
-    def __init__(self, x, y, i):
-        x = x
-        y = y
-        i = i
+    def __init__(self, x, y, i, stopflag=False):
+        self.x = x
+        self.y = y
+        self.i = i
+        self.stopflag = stopflag
+
+    def __iter__(self):
+        for each in self.__dict__.values():
+            yield each
 
     i = 0
     x = 0
     y = 0
     # velocity
-    # stopflag
+    stopflag = False
     # startflag
 
 
 class RcTrajectory:
     RcTrajectoryPoints = []
-    myReferencePoint = 0
+    myReferencePoint = RcTrajectoryPoint
 
     def __init__(self, filepath):
         with open(filepath, 'r+b') as handle:
             path_list = pickle.load(handle)
             i = 0
             for point in path_list:
-                self.RcTrajectoryPoints.append(RcTrajectoryPoint(point[0], point[1],i))
+                if 42 > point[0] > 39 and 72 < point[1] < 133:
+                    self.RcTrajectoryPoints.append(RcTrajectoryPoint(point[0], point[1], i, True))
+                else:
+                    self.RcTrajectoryPoints.append(RcTrajectoryPoint(point[0], point[1], i, False))
                 i += 1
 
     def get_traj(self):
@@ -40,10 +47,16 @@ class RcTrajectory:
 
 
 class RcAdaptiveTrajectory(RcTrajectory):
-    rc_normal_traj = RcTrajectory(r'D:\defaultPaths\normal.trj')
-    rc_parking_traj = RcTrajectory(r'D:\defaultPaths\parking.trj')
+    def __init__(self):
+        self.current_trajectory = self.__rc_normal_traj
+        self.parking_button_clicked = False
+        self.continue_button_clicked = False
+        self.trajectory_changed = False
 
-    current_trajectory = rc_normal_traj
+    __rc_normal_traj = RcTrajectory(r'D:\defaults\normal.trj')
+    __rc_parking_traj = RcTrajectory(r'D:\defaults\parking.trj')
+
+    current_trajectory = RcTrajectory
     reference_point = RcTrajectoryPoint
 
     parking_button_clicked = False
@@ -67,10 +80,10 @@ class RcAdaptiveTrajectory(RcTrajectory):
 
     def get_traj(self):
 
-        if RcAdaptiveTrajectory.check_event(self.reference_point) == self.Events.parking:
-            self.current_trajectory = self.rc_parking_traj
-        elif RcAdaptiveTrajectory.check_event(self.reference_point) == self.Events.cruising:
-            self.current_trajectory = self.rc_normal_traj
+        #if RcAdaptiveTrajectory.check_event(self.reference_point) == self.Events.parking:
+            #self.current_trajectory = self.__rc_parking_traj
+        #elif RcAdaptiveTrajectory.check_event(self.reference_point) == self.Events.cruising:
+        self.current_trajectory = self.__rc_normal_traj
 
         return self.current_trajectory
 

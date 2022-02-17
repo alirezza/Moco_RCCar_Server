@@ -6,6 +6,7 @@ from numpy.polynomial import polynomial
 import socket
 import math
 from time import sleep
+import trajectory as trj
 
 
 class StateControlCar(State):
@@ -55,11 +56,17 @@ class StateControlCar(State):
     UDPServer_Port = ServerConfig.getInstance().UDPServer_Port
     clientSocket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
-    def __init__(self, corner, path):
+    trajectory = trj.RcTrajectory
+    car_park_req = False
+    car_continue_req = False
+
+    def __init__(self, corner, path=None):
         self.corner_pts = corner
-        self.path_pts = path
-        path_pts_toarray = np.array(self.path_pts)
-        np.zeros([path_pts_toarray.shape[0], 3], dtype=float, order='C')
+        temp = trj.RcAdaptiveTrajectory()
+        self.trajectory = temp.current_trajectory
+        self.path_pts = self.trajectory.get_traj()
+        # path_pts_toarray = np.array(self.path_pts)
+        # np.zeros([path_pts_toarray.shape[0], 3], dtype=float, order='C')
         # for i in range(path_pts_toarray.shape[0]):
         #    new_path_pts[i] = [path_pts_toarray[i][0], path_pts_toarray[i][1], 0]
         # for i in range(path_pts_toarray.shape[0]):
@@ -71,7 +78,6 @@ class StateControlCar(State):
 
     def next(self):
         return self
-
 
     def start_car(self):
         for i in range(3):
@@ -89,6 +95,14 @@ class StateControlCar(State):
 
     def set_velocity(self, v):
         self.velocity = int(v)
+
+    def car_park(self):
+        self.car_continue_req = False
+        self.car_park_req = True
+
+    def car_continue(self):
+        self.car_park_req = False
+        self.car_continue_req = True
 
     def run(self):
 
@@ -135,7 +149,7 @@ class StateControlCar(State):
                             self.lastFigure = carFigure
 
                             cv.polylines(track_img, [np.array(self.lastFigure)], True, (255, 0, 0), 3)
-                            cv.polylines(track_img, [np.array(self.path_pts)], True, (0, 255, 0), 3)
+                            cv.polylines(track_img, [np.array(self.trjToArray(self.path_pts))], True, (0, 255, 0), 3)
 
                             # calculate heading angle
                             if not (topLeft[0] == bottomLeft[0] and topLeft[1] == bottomLeft[1]):
@@ -168,6 +182,7 @@ class StateControlCar(State):
                     deltaDistance = [round(pow(distance[0], 2) + pow(distance[1], 2), 2) for distance in
                                      deltaCoordinate]
                     self.index = deltaDistance.index(min(deltaDistance))
+                    self.trajectory.set_ref_point(self.index)
 
                 else:
                     self.check_i -= 0
@@ -182,8 +197,8 @@ class StateControlCar(State):
                     deltaDistance = [round(pow(distance[0], 2) + pow(distance[1], 2), 2) for distance in
                                      deltaCoordinate]
                     temp_index = deltaDistance.index(min(deltaDistance))
-                    self.index = (temp_index + self.index)%max_index
-
+                    self.index = (temp_index + self.index) % max_index
+                    self.trajectory.set_ref_point(self.index)
 
                 # 4 Punkte vor und nach Referenzpunkt
                 start_index = self.index - ServerConfig.getInstance().lookback_n
@@ -316,12 +331,12 @@ class StateControlCar(State):
                 # print(f'coeffs: {coeffs}')
                 # coeffs_px = [i * self.factor for i in coeffs]
 
-                coeffs_px = np.polyfit([i[0] for i in self.current_path], [i[1] for i in self.current_path],
+                coeffs_px = np.polyfit([i.x for i in self.current_path], [i.y for i in self.current_path],
                                        2)  # bilde Polynom aus Abstand zu Punkten
-                cv_pts_y = [np.polyval(coeffs_px, i[0]) for i in self.current_path]
+                cv_pts_y = [np.polyval(coeffs_px, i.x) for i in self.current_path]
                 cv_pts = []
                 for i in range(len(self.current_path)):
-                    cv_pts.append([self.current_path[i][0], int(cv_pts_y[i])])
+                    cv_pts.append([self.current_path[i].x, int(cv_pts_y[i])])
                 # print(cv_pts)
                 for i in cv_pts:
                     cv.circle(track_img, i, 5, (255, 0, 0))
@@ -330,6 +345,13 @@ class StateControlCar(State):
                 # Activate/Deactivate Control
                 if self.control_active_req is not self.control_active:
                     self.control_active = self.control_active_req
+                    #check stopflag
+                    if self.trajectory.myReferencePoint.stopflag and self.car_park_req:
+                        print("parking")
+                        msg = str(0).zfill(3) + " " + str(0).zfill(3)
+                        self.clientSocket.sendto(bytes(msg, "utf-8"), (self.UDPServer_IP, self.UDPServer_Port))
+                        sleep(ServerConfig.getInstance().MessageDelay)
+
                     # sende Anfahrreq
                     if self.control_active_req:
                         msg = str(200).zfill(3) + " " + str(0).zfill(3)
@@ -412,7 +434,7 @@ class StateControlCar(State):
         self.dSteeringAngle_allowed = ServerConfig.getInstance().steeringAngle_gradient * ServerConfig.getInstance().sample_time
 
         for path_point in self.path_pts:
-            self.path_pts_cm.append([path_point[0] / self.factorX, path_point[1] / self.factorY])
+            self.path_pts_cm.append([path_point.x / self.factorX, path_point.y / self.factorY])
         print(self.path_pts_cm)
 
     def on_leave(self):
@@ -422,3 +444,11 @@ class StateControlCar(State):
         cv.destroyAllWindows()
         self.cam.release()
         print("Leaving Control Car State")
+
+    def trjToArray(self, trj):
+        array = []
+        i = 0
+        for point in trj:
+            array.append([point.x, point.y])
+            i += 1
+        return array

@@ -1,3 +1,4 @@
+import os
 import sys
 
 from PySide6.QtWidgets import QApplication, QPushButton, QDialog, QVBoxLayout, QLabel, QFileDialog, QSlider
@@ -79,18 +80,32 @@ def stop_car():
 @Slot()
 def park_car():
     trajectory.RcAdaptiveTrajectory.parking_button_clicked = True
+    if isinstance(myLogicThread.myStateMachine.currentState, StateControlCar):
+        myLogicThread.myStateMachine.currentState.car_park()
 
 
 @Slot()
 def continue_car():
     trajectory.RcAdaptiveTrajectory.continue_button_clicked = True
-
+    if isinstance(myLogicThread.myStateMachine.currentState, StateControlCar):
+        myLogicThread.myStateMachine.currentState.car_continue()
 
 @Slot()
 def set_velocity(vel):
     if isinstance(myLogicThread.myStateMachine.currentState, StateControlCar):
         myLogicThread.myStateMachine.currentState.set_velocity(vel)
     print(vel)
+
+
+@Slot()
+def newPath():
+    myLogicThread.myStateMachine.force_next_state(StatePathDetect())
+
+@Slot()
+def resetCorner():
+    os.remove(StateCornerDetection.corner_trajectory_adr)
+    print("old corner trj removed")
+    restart_state_machine()
 
 
 class Form(QDialog):
@@ -106,6 +121,8 @@ class Form(QDialog):
         self.button7 = QPushButton("Stop Car")
         self.button8 = QPushButton("Park")
         self.button9 = QPushButton("Continue")
+        self.button10 = QPushButton("Reset Corners")
+        self.button11 = QPushButton("Create new Path")
         self.slider1 = QSlider(Qt.Horizontal)
         self.statusText = QLabel("Status Label")
 
@@ -116,14 +133,16 @@ class Form(QDialog):
         # Create layout and add widgets
         layout = QVBoxLayout()
         layout.addWidget(self.button1)
-        layout.addWidget(self.button2)
-        layout.addWidget(self.button3)
-        layout.addWidget(self.button5)
-        layout.addWidget(self.button4)
         layout.addWidget(self.button6)
         layout.addWidget(self.button7)
         layout.addWidget(self.button8)
         layout.addWidget(self.button9)
+        layout.addWidget(self.button2)
+        layout.addWidget(self.button3)
+        layout.addWidget(self.button5)
+        layout.addWidget(self.button4)
+        layout.addWidget(self.button10)
+        layout.addWidget(self.button11)
         layout.addWidget(self.statusText)
         layout.addWidget(self.slider1)
 
@@ -148,6 +167,8 @@ myDialog.button6.clicked.connect(start_car)
 myDialog.button7.clicked.connect(stop_car)
 myDialog.button8.clicked.connect(park_car)
 myDialog.button9.clicked.connect(continue_car)
+myDialog.button10.clicked.connect(resetCorner)
+myDialog.button11.clicked.connect(newPath)
 myDialog.slider1.valueChanged.connect(lambda: set_velocity(myDialog.slider1.value()))
 myDialog.statusText.setText("Vehicle Velocity")
 

@@ -25,8 +25,13 @@ class StatePathDetect(State):
     height = ServerConfig.getInstance().TrackHeight
 
     usepath = False
+    force_flag = False
 
-    def __init__(self, pts):
+    def __init__(self, pts=None):
+        if pts is None:
+            with open(ServerConfig.getInstance().corner_trajectory_adr, 'rb') as handle:
+                corner_list = pickle.load(handle)
+                pts = corner_list
         self.pts1_list = pts
 
     def next(self):
@@ -119,7 +124,8 @@ class StatePathDetect(State):
             print("Path Loaded")
             # print(self.path_list)
 
-    def draw_grid(self,img, line_color=(0, 255, 0), thickness=1, type_=cv.LINE_AA, x_pxstep=int(15*(img_width/width)), y_pxstep=int(15*(img_height/height))):
+    def draw_grid(self, img, line_color=(0, 255, 0), thickness=1, type_=cv.LINE_AA,
+                  x_pxstep=int(15 * (img_width / width)), y_pxstep=int(15 * (img_height / height))):
         '''(ndarray, 3-tuple, int, int) -> void
         draw gridlines on img
         line_color:
@@ -144,11 +150,11 @@ class StatePathDetect(State):
             cv.line(img, (0, y), (img.shape[1], y), color=line_color, lineType=type_, thickness=thickness)
             y += y_pxstep
 
-    def draw_tag_border(self,img):
+    def draw_tag_border(self, img):
         arucoDict = cv.aruco.Dictionary_get(cv.aruco.DICT_ARUCO_ORIGINAL)
         arucoParams = cv.aruco.DetectorParameters_create()
         corners, ids, rejectedCandidates = cv.aruco.detectMarkers(img, arucoDict,
-                                                                                    parameters=arucoParams)
+                                                                  parameters=arucoParams)
         if len(corners) > 0:
             # flatten the ArUco IDs list
             ids = ids.flatten()
@@ -175,5 +181,5 @@ class StatePathDetect(State):
                 cv.circle(img, (cX, cY), 4, (0, 0, 255), -1)
                 # draw the ArUco marker ID on the image
                 cv.putText(img, str(markerID),
-                            (topLeft[0], topLeft[1] - 15), cv.FONT_HERSHEY_SIMPLEX,
-                            0.5, (0, 255, 0), 2)
+                           (topLeft[0], topLeft[1] - 15), cv.FONT_HERSHEY_SIMPLEX,
+                           0.5, (0, 255, 0), 2)
