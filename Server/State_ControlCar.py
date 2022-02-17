@@ -10,6 +10,8 @@ import trajectory as trj
 
 
 class StateControlCar(State):
+    accel = 0
+    angle = 0
     cam = 0
     matrix = 0
 
@@ -56,21 +58,14 @@ class StateControlCar(State):
     UDPServer_Port = ServerConfig.getInstance().UDPServer_Port
     clientSocket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
-    trajectory = trj.RcTrajectory
+    trajectory = 0
     car_park_req = False
     car_continue_req = False
 
     def __init__(self, corner, path=None):
         self.corner_pts = corner
-        temp = trj.RcAdaptiveTrajectory()
-        self.trajectory = temp.current_trajectory
+        self.trajectory = trj.RcAdaptiveTrajectory()
         self.path_pts = self.trajectory.get_traj()
-        # path_pts_toarray = np.array(self.path_pts)
-        # np.zeros([path_pts_toarray.shape[0], 3], dtype=float, order='C')
-        # for i in range(path_pts_toarray.shape[0]):
-        #    new_path_pts[i] = [path_pts_toarray[i][0], path_pts_toarray[i][1], 0]
-        # for i in range(path_pts_toarray.shape[0]):
-        #    path_pts_toarray[i] = np.matmul(new_path_pts[i], self.matrix)
         self.path_pts_cm = []
         self.control_active = False
         self.control_active_req = False
@@ -80,10 +75,9 @@ class StateControlCar(State):
         return self
 
     def start_car(self):
-        for i in range(3):
-            msg = str(0).zfill(3) + " " + str(0).zfill(3)
-            self.clientSocket.sendto(bytes(msg, "utf-8"), (self.UDPServer_IP, self.UDPServer_Port))
-            sleep(ServerConfig.getInstance().MessageDelay)
+        msg = str(0).zfill(3) + " " + str(0).zfill(3)
+        self.clientSocket.sendto(bytes(msg, "utf-8"), (self.UDPServer_IP, self.UDPServer_Port))
+        sleep(ServerConfig.getInstance().MessageDelay)
 
         self.control_active_req = True
 
@@ -97,12 +91,20 @@ class StateControlCar(State):
         self.velocity = int(v)
 
     def car_park(self):
+        self.path_pts = self.trajectory.get_traj()
         self.car_continue_req = False
         self.car_park_req = True
+        self.path_pts_cm = []
+        for path_point in self.path_pts:
+            self.path_pts_cm.append([path_point.x / self.factorX, path_point.y / self.factorY])
 
     def car_continue(self):
+        self.path_pts = self.trajectory.get_traj()
         self.car_park_req = False
         self.car_continue_req = True
+        self.path_pts_cm = []
+        for path_point in self.path_pts:
+            self.path_pts_cm.append([path_point.x / self.factorX, path_point.y / self.factorY])
 
     def run(self):
 
@@ -171,21 +173,21 @@ class StateControlCar(State):
             # print(f"coordinates - x, y: {self.carCoordinateX_cm}cm, {self.carCoordinateY_cm}cm")
             # print(f"heading angle: {self.headingAngle}")
             # print(f"heading angle rad: {self.headingAngleRad}")
+            # get the current path
 
             # 3 Ermittle Referenzpunkt (nähester Punkt) auf Pfad
+
             if self.carCoordinateX_cm > 0 and self.carCoordinateY_cm > 0:
-                if (not self.control_active) or (self.check_i == 0):
-                    self.check_i = 25
+                if (not self.control_active):
                     deltaCoordinate = [
                         (path_pt[0] - self.carCoordinateX_cm, path_pt[1] - self.carCoordinateY_cm) for
                         path_pt in self.path_pts_cm]
                     deltaDistance = [round(pow(distance[0], 2) + pow(distance[1], 2), 2) for distance in
                                      deltaCoordinate]
                     self.index = deltaDistance.index(min(deltaDistance))
-                    self.trajectory.set_ref_point(self.index)
+                    self.trajectory.set_ref_point(self.path_pts[self.index])
 
                 else:
-                    self.check_i -= 0
 
                     max_index = self.path_pts_cm.index(self.path_pts_cm[-1])
                     paths = []
@@ -198,7 +200,7 @@ class StateControlCar(State):
                                      deltaCoordinate]
                     temp_index = deltaDistance.index(min(deltaDistance))
                     self.index = (temp_index + self.index) % max_index
-                    self.trajectory.set_ref_point(self.index)
+                    self.trajectory.set_ref_point(self.path_pts[self.index])
 
                 # 4 Punkte vor und nach Referenzpunkt
                 start_index = self.index - ServerConfig.getInstance().lookback_n
@@ -345,12 +347,7 @@ class StateControlCar(State):
                 # Activate/Deactivate Control
                 if self.control_active_req is not self.control_active:
                     self.control_active = self.control_active_req
-                    #check stopflag
-                    if self.trajectory.myReferencePoint.stopflag and self.car_park_req:
-                        print("parking")
-                        msg = str(0).zfill(3) + " " + str(0).zfill(3)
-                        self.clientSocket.sendto(bytes(msg, "utf-8"), (self.UDPServer_IP, self.UDPServer_Port))
-                        sleep(ServerConfig.getInstance().MessageDelay)
+
 
                     # sende Anfahrreq
                     if self.control_active_req:
@@ -367,47 +364,55 @@ class StateControlCar(State):
                     # self.clientSocket.sendto(bytes(str(msg), "utf-8"), (self.UDPServer_IP, self.UDPServer_Port))
                     # sleep(ServerConfig.getInstance().MessageDelay)
                 elif self.control_active:
-                    # 9 Sende Daten (Querablagefehler, Winkeldifferenz, Krümmung)sg = str(dY_m, dPsi_rad/dPsi_deg, K_minv)  # "Winkel, Geschwindigkeit" muss formatiert sein
-                    # accel = ServerConfig.getInstance().vehicle_speed + int(
-                    #    pow(abs(self.finalSteeringAngle_deg) * 0.1, 2.5))
-                    accel = self.velocity
-                    angle = self.finalSteeringAngle_deg
-
-                    if (
-                            abs(angle) * ServerConfig.getInstance().vehicle_curv_factor) < ServerConfig.getInstance().vehicle_curv_min:
-                        accel += ServerConfig.getInstance().vehicle_curv_min
-                    if (
-                            abs(angle) * ServerConfig.getInstance().vehicle_curv_factor) > ServerConfig.getInstance().vehicle_curv_max:
-                        accel += ServerConfig.getInstance().vehicle_curv_max
+                    # check stopflag
+                    if self.trajectory.reference_point.stopflag and self.car_park_req :
+                        if 180 > self.lastCoordinate[0] > 130 and 255 < self.lastCoordinate[1] < 455:
+                            msg = str(0).zfill(3) + " " + str(0).zfill(3)
+                            self.clientSocket.sendto(bytes(msg, "utf-8"), (self.UDPServer_IP, self.UDPServer_Port))
+                            sleep(ServerConfig.getInstance().MessageDelay * 2)
                     else:
-                        accel += (abs(angle) * ServerConfig.getInstance().vehicle_curv_factor)
+                        # 9 Sende Daten (Querablagefehler, Winkeldifferenz, Krümmung)sg = str(dY_m, dPsi_rad/dPsi_deg, K_minv)  # "Winkel, Geschwindigkeit" muss formatiert sein
+                        # accel = ServerConfig.getInstance().vehicle_speed + int(
+                        #    pow(abs(self.finalSteeringAngle_deg) * 0.1, 2.5))
+                        accel = self.velocity
+                        angle = self.finalSteeringAngle_deg
 
-                    accel = math.trunc(accel)
-                    angle = math.trunc(angle)
-                    # print(f'accel: {accel}')
-                    # print(f'angle: {angle}')
+                        if (
+                                abs(angle) * ServerConfig.getInstance().vehicle_curv_factor) < ServerConfig.getInstance().vehicle_curv_min:
+                            accel += ServerConfig.getInstance().vehicle_curv_min
+                        if (
+                                abs(angle) * ServerConfig.getInstance().vehicle_curv_factor) > ServerConfig.getInstance().vehicle_curv_max:
+                            accel += ServerConfig.getInstance().vehicle_curv_max
+                        else:
+                            accel += (abs(angle) * ServerConfig.getInstance().vehicle_curv_factor)
 
-                    msg = str(accel).zfill(3) + " " + str(angle).zfill(3)
+                        self.accel = math.trunc(accel)
+                        self.angle = math.trunc(angle)
+                        # print(f'accel: {accel}')
+                        # print(f'angle: {angle}')
+                        ServerConfig.vehicle_angle = self.angle
+                        ServerConfig.vehicle_const_speed = self.accel
+                        msg = str(self.accel).zfill(3) + " " + str(self.angle).zfill(3)
 
-                    # msg = str(accel).zfill(3) + " " + str(angle).zfill(3)
-                    self.clientSocket.sendto(bytes(msg, "utf-8"), (self.UDPServer_IP, self.UDPServer_Port))
-                    sleep(ServerConfig.getInstance().MessageDelay)
+                        # msg = str(accel).zfill(3) + " " + str(angle).zfill(3)
+                        self.clientSocket.sendto(bytes(msg, "utf-8"), (self.UDPServer_IP, self.UDPServer_Port))
+                        sleep(ServerConfig.getInstance().MessageDelay)
 
-                    # accel = ServerConfig.getInstance().vehicle_const_speed + int(abs(self.finalSteeringAngle_deg) * 0.3)
-                    # accel = 100
-                    # print(accel)
-                    # accel = self.velocity + int(pow(abs(self.finalSteeringAngle_deg) * 0.2, 2))
-                    # print(self.velocity)
-                    # print(f'accel: {accel}')
-                    # msg = "000" + " " + str(int(-self.finalSteeringAngle_deg))
-                    # msg = str(accel) + " " + str(int(-self.finalSteeringAngle_deg))
-                    # self.clientSocket.sendto(bytes(msg, "utf-8"), (self.UDPServer_IP, self.UDPServer_Port))
-                    # sleep(ServerConfig.getInstance().MessageDelay)
+                        # accel = ServerConfig.getInstance().vehicle_const_speed + int(abs(self.finalSteeringAngle_deg) * 0.3)
+                        # accel = 100
+                        # print(accel)
+                        # accel = self.velocity + int(pow(abs(self.finalSteeringAngle_deg) * 0.2, 2))
+                        # print(self.velocity)
+                        # print(f'accel: {accel}')
+                        # msg = "000" + " " + str(int(-self.finalSteeringAngle_deg))
+                        # msg = str(accel) + " " + str(int(-self.finalSteeringAngle_deg))
+                        # self.clientSocket.sendto(bytes(msg, "utf-8"), (self.UDPServer_IP, self.UDPServer_Port))
+                        # sleep(ServerConfig.getInstance().MessageDelay)
 
-                    '''msg = str(int(ServerConfig.getInstance().vehicle_const_speed + 0.25 * abs(self.finalSteeringAngle_deg))) + " " + str(int(-self.finalSteeringAngle_deg))
-                    print(f'msg: {msg}')
-                    self.clientSocket.sendto(bytes(msg, "utf-8"), (self.UDPServer_IP, self.UDPServer_Port))
-                    sleep(ServerConfig.getInstance().MessageDelay)'''
+                        '''msg = str(int(ServerConfig.getInstance().vehicle_const_speed + 0.25 * abs(self.finalSteeringAngle_deg))) + " " + str(int(-self.finalSteeringAngle_deg))
+                        print(f'msg: {msg}')
+                        self.clientSocket.sendto(bytes(msg, "utf-8"), (self.UDPServer_IP, self.UDPServer_Port))
+                        sleep(ServerConfig.getInstance().MessageDelay)'''
 
             cv.imshow('Track Record', track_img)
             k = cv.waitKey(20) & 0xFF

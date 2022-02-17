@@ -44,7 +44,8 @@ class ServerConfig:
     MessageDelay = 0.025  # in sek
 
     # Vehicle
-    vehicle_const_speed = 87
+    vehicle_const_speed = 85
+    vehicle_angle = 0
     vehicle_curv_factor = 1 / 3
     vehicle_curv_max = 10
     vehicle_curv_min = 0

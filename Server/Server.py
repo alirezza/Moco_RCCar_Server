@@ -79,15 +79,19 @@ def stop_car():
 
 @Slot()
 def park_car():
-    trajectory.RcAdaptiveTrajectory.parking_button_clicked = True
+
     if isinstance(myLogicThread.myStateMachine.currentState, StateControlCar):
+        myLogicThread.myStateMachine.currentState.trajectory.continue_button_clicked = False
+        myLogicThread.myStateMachine.currentState.trajectory.parking_button_clicked = True
         myLogicThread.myStateMachine.currentState.car_park()
 
 
 @Slot()
 def continue_car():
-    trajectory.RcAdaptiveTrajectory.continue_button_clicked = True
+
     if isinstance(myLogicThread.myStateMachine.currentState, StateControlCar):
+        myLogicThread.myStateMachine.currentState.trajectory.parking_button_clicked = False
+        myLogicThread.myStateMachine.currentState.trajectory.continue_button_clicked = True
         myLogicThread.myStateMachine.currentState.car_continue()
 
 @Slot()
@@ -106,11 +110,19 @@ def resetCorner():
     os.remove(StateCornerDetection.corner_trajectory_adr)
     print("old corner trj removed")
     restart_state_machine()
+@Slot()
+def changeDir():
+    if isinstance(myLogicThread.myStateMachine.currentState, StateControlCar):
+        myLogicThread.myStateMachine.currentState.trajectory.changeDir()
+        myLogicThread.myStateMachine.currentState.path_pts_cm.reverse()
+        print("Direction changed")
 
 
 class Form(QDialog):
+
     def __init__(self, parent=None):
         super(Form, self).__init__(parent)
+
         # Create widgets
         self.button1 = QPushButton("Reset State Machine")
         self.button2 = QPushButton("Lock In Path")
@@ -123,12 +135,14 @@ class Form(QDialog):
         self.button9 = QPushButton("Continue")
         self.button10 = QPushButton("Reset Corners")
         self.button11 = QPushButton("Create new Path")
-        self.slider1 = QSlider(Qt.Horizontal)
-        self.statusText = QLabel("Status Label")
+        self.button12 = QPushButton("Change Direction")
+        #self.slider1 = QSlider(Qt.Horizontal)
+        #self.statusText = QLabel("Status Label")
+        #self.statusText1 = QLabel("Status Label")
 
-        self.slider1.setRange(0, 150)
-        self.slider1.setTickInterval(1)
-        self.slider1.setValue(ServerConfig.getInstance().vehicle_const_speed)
+        #self.slider1.setRange(0, 150)
+        #self.slider1.setTickInterval(1)
+        #self.slider1.setValue(ServerConfig.getInstance().vehicle_const_speed)
 
         # Create layout and add widgets
         layout = QVBoxLayout()
@@ -143,9 +157,10 @@ class Form(QDialog):
         layout.addWidget(self.button4)
         layout.addWidget(self.button10)
         layout.addWidget(self.button11)
-        layout.addWidget(self.statusText)
-        layout.addWidget(self.slider1)
-
+        layout.addWidget(self.button12)
+        #layout.addWidget(self.statusText)
+        #layout.addWidget(self.slider1)
+        #layout.addWidget(self.statusText1)
         # Set dialog layout
         self.setLayout(layout)
 
@@ -169,9 +184,8 @@ myDialog.button8.clicked.connect(park_car)
 myDialog.button9.clicked.connect(continue_car)
 myDialog.button10.clicked.connect(resetCorner)
 myDialog.button11.clicked.connect(newPath)
-myDialog.slider1.valueChanged.connect(lambda: set_velocity(myDialog.slider1.value()))
-myDialog.statusText.setText("Vehicle Velocity")
-
+myDialog.button12.clicked.connect(changeDir)
+#myDialog.slider1.valueChanged.connect(lambda: set_velocity(myDialog.slider1.value()))
 myDialog.show()
 
 LogicThread.start()
