@@ -2,6 +2,7 @@ import pickle
 import enum
 from Configuration import ServerConfig
 
+
 class RcTrajectoryPoint:
     x = 0
     y = 0
@@ -9,7 +10,7 @@ class RcTrajectoryPoint:
     stopflag = False
     change_point_flag = False
 
-    def __init__(self, x, y, stopflag,change_point_flag):
+    def __init__(self, x, y, stopflag, change_point_flag):
         self.x = x
         self.y = y
         self.stopflag = stopflag
@@ -26,25 +27,21 @@ class RcTrajectory:
     factorX = 0
     factorY = 0
 
-    def __init__(self, filepath):
-        img_width = ServerConfig.getInstance().FrameWidth
-        img_height = ServerConfig.getInstance().FrameHeight
-
-        width = ServerConfig.getInstance().TrackWidth
-        height = ServerConfig.getInstance().TrackHeight
-
-        self.factorX = img_width / width
-        self.factorY = img_height / height
-
-        self.RcTrajectoryPoints = []
-        self.myReferencePoint = 0
-        with open(filepath, 'rb') as handle:
-            path_list = pickle.load(handle)
-            for point in path_list:
-                if 92*self.factorX > point[0] > 75*self.factorX and 78*self.factorY < point[1] < 153*self.factorY:
-                        self.RcTrajectoryPoints.append(RcTrajectoryPoint(point[0], point[1], True,True))
-                else:
-                        self.RcTrajectoryPoints.append(RcTrajectoryPoint(point[0], point[1], False,True))
+    def __init__(self, path):
+        if isinstance(path, list):
+            self.RcTrajectoryPoints = []
+            self.myReferencePoint = 0
+            for point in path:
+                self.RcTrajectoryPoints.append(
+                    RcTrajectoryPoint(point[0], point[1], isStopPoint(point), isChangePoint(point)))
+        else:
+            self.RcTrajectoryPoints = []
+            self.myReferencePoint = 0
+            with open(path, 'rb') as handle:
+                path_list = pickle.load(handle)
+                for point in path_list:
+                    self.RcTrajectoryPoints.append(
+                        RcTrajectoryPoint(point[0], point[1], isStopPoint(point), isChangePoint(point)))
 
     def get_traj(self):
         return self.RcTrajectoryPoints
@@ -53,7 +50,7 @@ class RcTrajectory:
         self.myReferencePoint = referencePoint
 
 
-class RcAdaptiveTrajectory(RcTrajectory):
+class RcAdaptiveTrajectory():
     __rc_parking_traj = 0
     __rc_normal_traj = 0
     parking_button_clicked = False
@@ -78,15 +75,15 @@ class RcAdaptiveTrajectory(RcTrajectory):
         self.parking_button_clicked = False
         self.continue_button_clicked = False
         self.trajectory_changed = False
-        self.reference_point = 0
+        var = self.reference_point
 
     def get_traj(self):
 
-        if self.parking_button_clicked and self.reference_point.change_point_flag == True :
+        if self.parking_button_clicked and self.reference_point.change_point_flag:
             self.parking_button_clicked = False
             self.current_trajectory = self.__rc_parking_traj
             print("parking")
-        elif self.continue_button_clicked and self.reference_point.change_point_flag == True:
+        elif self.continue_button_clicked and self.reference_point.change_point_flag:
             self.continue_button_clicked = False
             self.current_trajectory = self.__rc_normal_traj
             print("continue")
@@ -104,3 +101,24 @@ class RcAdaptiveTrajectory(RcTrajectory):
         self.__rc_normal_traj.get_traj().reverse()
         self.__rc_parking_traj.get_traj().reverse()
         self.current_trajectory.get_traj().reverse()
+
+
+def isStopPoint(point):
+    factorX = ServerConfig.getInstance().factorX
+    factorY = ServerConfig.getInstance().factorY
+    if 92 * factorX > point[0] > 75 * factorX and 78 * factorY < point[1] < 153 * factorY:
+        return True
+    else:
+        return False
+
+
+def isChangePoint(point):
+    factorX = ServerConfig.getInstance().factorX
+    factorY = ServerConfig.getInstance().factorY
+    if 40 * factorX > point[0] > 18 * factorX and 60 * factorY < point[1] < 80 * factorY:
+        print("is a Change Point")
+        print(point)
+        return True
+
+    else:
+        return False

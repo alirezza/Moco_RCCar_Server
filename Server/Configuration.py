@@ -15,6 +15,10 @@ class ServerConfig:
     elif TrackWidth < TrackHeight:
         FrameWidth = 480
         FrameHeight = int(480 * TrackHeight / TrackWidth)
+
+    factorX = FrameWidth / TrackWidth
+    factorY = FrameHeight / TrackHeight
+
     # Control
     lookback_n = 1
     lookahead_n = 4

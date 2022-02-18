@@ -2,7 +2,6 @@ from StateLib import *
 from Configuration import ServerConfig
 import cv2 as cv
 import numpy as np
-from numpy.polynomial import polynomial
 import socket
 import math
 from time import sleep
@@ -63,9 +62,13 @@ class StateControlCar(State):
     car_continue_req = False
 
     def __init__(self, corner, path=None):
+        if path is not None:
+            self.trajectory = trj.RcAdaptiveTrajectory()
+
+        else:
+            self.trajectory = trj.RcAdaptiveTrajectory()
+            self.path_pts = self.trajectory.get_traj()
         self.corner_pts = corner
-        self.trajectory = trj.RcAdaptiveTrajectory()
-        self.path_pts = self.trajectory.get_traj()
         self.path_pts_cm = []
         self.control_active = False
         self.control_active_req = False
@@ -348,7 +351,6 @@ class StateControlCar(State):
                 if self.control_active_req is not self.control_active:
                     self.control_active = self.control_active_req
 
-
                     # sende Anfahrreq
                     if self.control_active_req:
                         msg = str(200).zfill(3) + " " + str(0).zfill(3)
@@ -364,24 +366,23 @@ class StateControlCar(State):
                     # self.clientSocket.sendto(bytes(str(msg), "utf-8"), (self.UDPServer_IP, self.UDPServer_Port))
                     # sleep(ServerConfig.getInstance().MessageDelay)
                 elif self.control_active:
+                    # check for path change
+                    if self.trajectory.reference_point.change_point_flag:
+                        self.path_pts = self.trajectory.get_traj()
+                        self.path_pts_cm = []
+                        for path_point in self.path_pts:
+                            self.path_pts_cm.append([path_point.x / self.factorX, path_point.y / self.factorY])
                     # check stopflag
-                    if self.trajectory.reference_point.stopflag and self.car_park_req :
-                        img_width = ServerConfig.getInstance().FrameWidth
-                        img_height = ServerConfig.getInstance().FrameHeight
-
-                        width = ServerConfig.getInstance().TrackWidth
-                        height = ServerConfig.getInstance().TrackHeight
-
-                        factorX = img_width / width
-                        factorY = img_height / height
-                        if 92*factorX > self.lastCoordinate[0] > 75*factorX and 78*factorY < self.lastCoordinate[1] < 153*factorY:
+                    if self.trajectory.reference_point.stopflag and self.car_park_req:
+                        if trj.isStopPoint(self.lastCoordinate):
                             msg = str(0).zfill(3) + " " + str(0).zfill(3)
                             self.clientSocket.sendto(bytes(msg, "utf-8"), (self.UDPServer_IP, self.UDPServer_Port))
                             sleep(ServerConfig.getInstance().MessageDelay * 2)
                     else:
-                        # 9 Sende Daten (Querablagefehler, Winkeldifferenz, Krümmung)sg = str(dY_m, dPsi_rad/dPsi_deg, K_minv)  # "Winkel, Geschwindigkeit" muss formatiert sein
-                        # accel = ServerConfig.getInstance().vehicle_speed + int(
-                        #    pow(abs(self.finalSteeringAngle_deg) * 0.1, 2.5))
+                        # 9 Sende Daten (Querablagefehler, Winkeldifferenz, Krümmung)sg = str(dY_m,
+                        # dPsi_rad/dPsi_deg, K_minv)  # "Winkel, Geschwindigkeit" muss formatiert sein accel =
+                        # ServerConfig.getInstance().vehicle_speed + int( pow(abs(self.finalSteeringAngle_deg) * 0.1,
+                        # 2.5))
                         accel = self.velocity
                         angle = self.finalSteeringAngle_deg
 
@@ -465,4 +466,3 @@ class StateControlCar(State):
             array.append([point.x, point.y])
             i += 1
         return array
-
