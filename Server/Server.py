@@ -6,7 +6,7 @@ from PySide6.QtCore import *
 import threading
 import time
 
-import trajectory
+import Trajectory
 from State_ControlCar import StateControlCar
 from State_PathDetect import StatePathDetect
 from StateLib import *

@@ -6,7 +6,7 @@ from numpy.polynomial import polynomial
 import socket
 import math
 from time import sleep
-import trajectory as trj
+import Trajectory as trj
 
 
 class StateControlCar(State):
@@ -366,7 +366,15 @@ class StateControlCar(State):
                 elif self.control_active:
                     # check stopflag
                     if self.trajectory.reference_point.stopflag and self.car_park_req :
-                        if 180 > self.lastCoordinate[0] > 130 and 255 < self.lastCoordinate[1] < 455:
+                        img_width = ServerConfig.getInstance().FrameWidth
+                        img_height = ServerConfig.getInstance().FrameHeight
+
+                        width = ServerConfig.getInstance().TrackWidth
+                        height = ServerConfig.getInstance().TrackHeight
+
+                        factorX = img_width / width
+                        factorY = img_height / height
+                        if 92*factorX > self.lastCoordinate[0] > 75*factorX and 78*factorY < self.lastCoordinate[1] < 153*factorY:
                             msg = str(0).zfill(3) + " " + str(0).zfill(3)
                             self.clientSocket.sendto(bytes(msg, "utf-8"), (self.UDPServer_IP, self.UDPServer_Port))
                             sleep(ServerConfig.getInstance().MessageDelay * 2)
@@ -457,3 +465,4 @@ class StateControlCar(State):
             array.append([point.x, point.y])
             i += 1
         return array
+

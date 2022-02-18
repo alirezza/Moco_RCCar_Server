@@ -1,16 +1,15 @@
 import pickle
 import enum
-
+from Configuration import ServerConfig
 
 class RcTrajectoryPoint:
     x = 0
     y = 0
     # velocity
     stopflag = False
+    #change_point_flag = False
 
-    # startflag
-
-    def __init__(self, x, y, stopflag=False):
+    def __init__(self, x, y, stopflag):
         self.x = x
         self.y = y
         self.stopflag = stopflag
@@ -23,14 +22,25 @@ class RcTrajectoryPoint:
 class RcTrajectory:
     RcTrajectoryPoints = []
     myReferencePoint = 0
+    factorX = 0
+    factorY = 0
 
     def __init__(self, filepath):
+        img_width = ServerConfig.getInstance().FrameWidth
+        img_height = ServerConfig.getInstance().FrameHeight
+
+        width = ServerConfig.getInstance().TrackWidth
+        height = ServerConfig.getInstance().TrackHeight
+
+        self.factorX = img_width / width
+        self.factorY = img_height / height
+
         self.RcTrajectoryPoints = []
         self.myReferencePoint = 0
         with open(filepath, 'rb') as handle:
             path_list = pickle.load(handle)
             for point in path_list:
-                if 180 > point[0] > 130 and 255 < point[1] < 455:
+                if 92*self.factorX > point[0] > 75*self.factorX and 78*self.factorY < point[1] < 153*self.factorY:
                     self.RcTrajectoryPoints.append(RcTrajectoryPoint(point[0], point[1], True))
                 else:
                     self.RcTrajectoryPoints.append(RcTrajectoryPoint(point[0], point[1], False))
@@ -58,15 +68,15 @@ class RcAdaptiveTrajectory(RcTrajectory):
         self.parking_button_clicked = False
         self.continue_button_clicked = False
         self.trajectory_changed = False
-        self.reference_point = RcTrajectoryPoint
+        self.reference_point = 0
 
     def get_traj(self):
 
-        if self.parking_button_clicked:
+        if self.parking_button_clicked and 92*self.factorX > self.reference_point.x > 75*self.factorX and 78*self.factorY < self.reference_point.y < 153*self.factorY :
             self.parking_button_clicked = False
             self.current_trajectory = self.__rc_parking_traj
             print("parking")
-        elif self.continue_button_clicked:
+        elif self.continue_button_clicked and 92*self.factorX > self.reference_point.x > 75*self.factorX and 78*self.factorY < self.reference_point.y < 153*self.factorY:
             self.continue_button_clicked = False
             self.current_trajectory = self.__rc_normal_traj
             print("continue")
