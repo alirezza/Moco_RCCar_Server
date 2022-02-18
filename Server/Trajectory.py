@@ -7,12 +7,13 @@ class RcTrajectoryPoint:
     y = 0
     # velocity
     stopflag = False
-    #change_point_flag = False
+    change_point_flag = False
 
-    def __init__(self, x, y, stopflag):
+    def __init__(self, x, y, stopflag,change_point_flag):
         self.x = x
         self.y = y
         self.stopflag = stopflag
+        self.change_point_flag = change_point_flag
 
     def __iter__(self):
         for each in self.__dict__.values():
@@ -41,9 +42,9 @@ class RcTrajectory:
             path_list = pickle.load(handle)
             for point in path_list:
                 if 92*self.factorX > point[0] > 75*self.factorX and 78*self.factorY < point[1] < 153*self.factorY:
-                    self.RcTrajectoryPoints.append(RcTrajectoryPoint(point[0], point[1], True))
+                        self.RcTrajectoryPoints.append(RcTrajectoryPoint(point[0], point[1], True,True))
                 else:
-                    self.RcTrajectoryPoints.append(RcTrajectoryPoint(point[0], point[1], False))
+                        self.RcTrajectoryPoints.append(RcTrajectoryPoint(point[0], point[1], False,True))
 
     def get_traj(self):
         return self.RcTrajectoryPoints
@@ -62,8 +63,17 @@ class RcAdaptiveTrajectory(RcTrajectory):
     reference_point = 0
 
     def __init__(self):
-        self.__rc_parking_traj = RcTrajectory(r'D:\defaults\parking.trj')
-        self.__rc_normal_traj = RcTrajectory(r'D:\defaults\normal.trj')
+        try:
+            self.__rc_parking_traj = RcTrajectory(r'D:\defaults\parking.trj')
+        except:
+            open(r'D:\defaults\parking.trj', 'a').close()
+            self.__rc_parking_traj = RcTrajectory(r'D:\defaults\parking.trj')
+        try:
+            self.__rc_normal_traj = RcTrajectory(r'D:\defaults\normal.trj')
+        except:
+            open(r'D:\defaults\normal.trj', 'a').close()
+            self.__rc_normal_traj = RcTrajectory(r'D:\defaults\normal.trj')
+
         self.current_trajectory = self.__rc_normal_traj
         self.parking_button_clicked = False
         self.continue_button_clicked = False
@@ -72,11 +82,11 @@ class RcAdaptiveTrajectory(RcTrajectory):
 
     def get_traj(self):
 
-        if self.parking_button_clicked and 92*self.factorX > self.reference_point.x > 75*self.factorX and 78*self.factorY < self.reference_point.y < 153*self.factorY :
+        if self.parking_button_clicked and self.reference_point.change_point_flag == True :
             self.parking_button_clicked = False
             self.current_trajectory = self.__rc_parking_traj
             print("parking")
-        elif self.continue_button_clicked and 92*self.factorX > self.reference_point.x > 75*self.factorX and 78*self.factorY < self.reference_point.y < 153*self.factorY:
+        elif self.continue_button_clicked and self.reference_point.change_point_flag == True:
             self.continue_button_clicked = False
             self.current_trajectory = self.__rc_normal_traj
             print("continue")
