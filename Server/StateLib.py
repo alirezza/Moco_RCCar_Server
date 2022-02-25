@@ -31,7 +31,6 @@ class StateMachine:
         elif self.currentState != next_state:
             self.set_next_state(next_state)
 
-
     def set_next_state(self, next_state):
         if self.currentState != next_state:
             self.currentState.on_leave()
@@ -41,6 +40,3 @@ class StateMachine:
     def force_next_state(self, next_state):
         self.forceFlag = True
         self.forceState = next_state
-
-
-

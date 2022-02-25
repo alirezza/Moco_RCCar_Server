@@ -5,10 +5,11 @@ class ServerConfig:
     corner_trajectory_adr = r'D:\defaults\corner.trj'
 
     CamSelect = 1
-    # 'http://192.168.223.99:8080/video'
-    TrackWidth = 138.5  # 114 cm
-    TrackHeight = 289  # 255 cm
+    # 'http://192.168.223.99:8080/video' for IPCam
+    TrackWidth = 138.5  # cm
+    TrackHeight = 289  # cm
 
+    # Resolution
     if TrackWidth > TrackHeight:
         FrameWidth = int(640 * TrackWidth / TrackHeight)
         FrameHeight = 640
@@ -16,6 +17,7 @@ class ServerConfig:
         FrameWidth = 480
         FrameHeight = int(480 * TrackHeight / TrackWidth)
 
+    # Pixel in cm ratio
     factorX = FrameWidth / TrackWidth
     factorY = FrameHeight / TrackHeight
 
