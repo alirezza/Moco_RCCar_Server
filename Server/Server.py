@@ -79,6 +79,7 @@ def stop_car():
 def park_car():
     if isinstance(myLogicThread.myStateMachine.currentState, StateControlCar):
         myLogicThread.myStateMachine.currentState.trajectory.continue_button_clicked = False
+        myLogicThread.myStateMachine.currentState.trajectory.half_button_clicked = False
         myLogicThread.myStateMachine.currentState.trajectory.parking_button_clicked = True
         myLogicThread.myStateMachine.currentState.car_park()
 
@@ -87,9 +88,16 @@ def park_car():
 def continue_car():
     if isinstance(myLogicThread.myStateMachine.currentState, StateControlCar):
         myLogicThread.myStateMachine.currentState.trajectory.parking_button_clicked = False
+        myLogicThread.myStateMachine.currentState.trajectory.half_button_clicked = False
         myLogicThread.myStateMachine.currentState.trajectory.continue_button_clicked = True
         myLogicThread.myStateMachine.currentState.car_continue()
 
+def half_car():
+    if isinstance(myLogicThread.myStateMachine.currentState, StateControlCar):
+        myLogicThread.myStateMachine.currentState.trajectory.parking_button_clicked = False
+        myLogicThread.myStateMachine.currentState.trajectory.continue_button_clicked = False
+        myLogicThread.myStateMachine.currentState.trajectory.half_button_clicked = True
+        myLogicThread.myStateMachine.currentState.car_half()
 
 @Slot()
 def set_velocity(vel):
@@ -116,6 +124,10 @@ def changeDir():
         myLogicThread.myStateMachine.currentState.trajectory.changeDir()
         myLogicThread.myStateMachine.currentState.path_pts_cm.reverse()
         print("Direction changed")
+
+
+
+
 
 
 class TabDialog(QDialog):
@@ -147,26 +159,39 @@ class MainTab(QWidget):
         main_group = QGroupBox("Main")
         self.start_button = QPushButton("Start Car")
         self.stop_car = QPushButton("Stop Car")
+        manoeuvre_group = QGroupBox("Manoeuvres")
         self.park_button = QPushButton("Park")
         self.continue_button = QPushButton("Continue")
+        self.half_button = QPushButton("Short round")
         information_gruop = QGroupBox("Information")
         self.statusText_speed = QLabel("Speed: ")
+        self.statusText_actualspeed = QLabel("0")
         self.statusText_angle = QLabel("Steering angle: ")
+        self.statusText_actualangle = QLabel("0")
+
 
         main_layout = QVBoxLayout()
         main_layout.addWidget(self.start_button)
         main_layout.addWidget(self.stop_car)
-        main_layout.addWidget(self.park_button)
-        main_layout.addWidget(self.continue_button)
         main_group.setLayout(main_layout)
+
+        manoeuvre_layout = QVBoxLayout()
+        manoeuvre_layout.addWidget(self.park_button)
+        manoeuvre_layout.addWidget(self.continue_button)
+        manoeuvre_layout.addWidget(self.half_button)
+        manoeuvre_group.setLayout(manoeuvre_layout)
+
 
         information_layout = QVBoxLayout()
         information_layout.addWidget(self.statusText_speed)
+        information_layout.addWidget(self.statusText_actualspeed)
         information_layout.addWidget(self.statusText_angle)
+        information_layout.addWidget(self.statusText_actualangle)
         information_gruop.setLayout(information_layout)
 
         main_layout = QVBoxLayout()
         main_layout.addWidget(main_group)
+        main_layout.addWidget(manoeuvre_group)
         main_layout.addWidget(information_gruop)
         main_layout.addStretch(1)
         self.setLayout(main_layout)
@@ -175,6 +200,7 @@ class MainTab(QWidget):
         self.stop_car.clicked.connect(stop_car)
         self.park_button.clicked.connect(park_car)
         self.continue_button.clicked.connect(continue_car)
+        self.half_button.clicked.connect(half_car)
 
 
 class PathTab(QWidget):
@@ -190,11 +216,14 @@ class PathTab(QWidget):
         self.create_path_button = QPushButton("Create new Path")
 
         path_layout = QVBoxLayout()
+        path_layout.addWidget(self.create_path_button)
         path_layout.addWidget(self.lock_in_button)
         path_layout.addWidget(self.clear_button)
         path_layout.addWidget(self.save_button)
         path_layout.addWidget(self.load_button)
         path_group.setLayout(path_layout)
+
+
 
         main_layout = QVBoxLayout()
         main_layout.addWidget(path_group)

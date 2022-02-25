@@ -1,3 +1,4 @@
+import os
 import pickle
 import enum
 from Configuration import ServerConfig
@@ -39,11 +40,12 @@ class RcTrajectory:
             # if trj is a .trj file
             self.RcTrajectoryPoints = []
             self.myReferencePoint = 0
-            with open(path, 'rb') as handle:
-                path_list = pickle.load(handle)
-                for point in path_list:
-                    self.RcTrajectoryPoints.append(
-                        RcTrajectoryPoint(point[0], point[1], isStopPoint(point), isChangePoint(point)))
+            if os.path.getsize(path) > 0:
+                with open(path, 'rb') as handle:
+                    path_list = pickle.load(handle)
+                    for point in path_list:
+                        self.RcTrajectoryPoints.append(
+                            RcTrajectoryPoint(point[0], point[1], isStopPoint(point), isChangePoint(point)))
 
     def get_traj(self):
         return self.RcTrajectoryPoints
@@ -55,6 +57,7 @@ class RcTrajectory:
 class RcAdaptiveTrajectory():
     __rc_parking_traj = 0
     __rc_normal_traj = 0
+    __rc_half_traj = 0
     parking_button_clicked = False
     continue_button_clicked = False
     trajectory_changed = False
@@ -62,20 +65,33 @@ class RcAdaptiveTrajectory():
     reference_point = 0
 
     def __init__(self):
+        fileDir = os.path.dirname(os.path.realpath('__file__'))
         try:
-            self.__rc_parking_traj = RcTrajectory(r'D:\defaults\parking.trj')
-        except FileNotFoundError and FileExistsError:
-            open(r'D:\defaults\parking.trj', 'a').close()
-            self.__rc_parking_traj = RcTrajectory(r'D:\defaults\parking.trj')
+            filepath = os.path.join(fileDir, r'..\Trajs\parking.trj')
+            self.__rc_parking_traj = RcTrajectory(filepath)
+        except:
+            filepath = os.path.join(fileDir, r'..\Trajs\parking.trj')
+            open(filepath, 'ab').close()
+            self.__rc_parking_traj = RcTrajectory(filepath)
         try:
-            self.__rc_normal_traj = RcTrajectory(r'D:\defaults\normal.trj')
-        except FileNotFoundError and FileExistsError:
-            open(r'D:\defaults\normal.trj', 'a').close()
-            self.__rc_normal_traj = RcTrajectory(r'D:\defaults\normal.trj')
+            filepath = os.path.join(fileDir, r'.\..\Trajs\normal.trj')
+            self.__rc_normal_traj = RcTrajectory(filepath)
+        except:
+            filepath = os.path.join(fileDir, r'.\..\Trajs\normal.trj')
+            open(filepath, 'ab').close()
+            self.__rc_normal_traj = RcTrajectory(filepath)
+        try:
+            filepath = os.path.join(fileDir, r'.\..\Trajs\half.trj')
+            self.__rc_half_traj = RcTrajectory(filepath)
+        except FileNotFoundError:
+            filepath = os.path.join(fileDir, r'.\..\Trajs\half.trj')
+            open(filepath, 'ab').close()
+            self.__rc_half_traj = RcTrajectory(filepath)
 
         self.current_trajectory = self.__rc_normal_traj
         self.parking_button_clicked = False
         self.continue_button_clicked = False
+        self.half_button_clicked = False
         self.trajectory_changed = False
         var = self.reference_point
 
@@ -89,6 +105,10 @@ class RcAdaptiveTrajectory():
             self.continue_button_clicked = False
             self.current_trajectory = self.__rc_normal_traj
             print("continue")
+        elif self.half_button_clicked and self.reference_point.change_point_flag:
+            self.continue_button_clicked = False
+            self.current_trajectory = self.__rc_half_traj
+            print("half")
 
         return self.current_trajectory.get_traj()
 
@@ -102,14 +122,24 @@ class RcAdaptiveTrajectory():
     def changeDir(self):
         self.__rc_normal_traj.get_traj().reverse()
         self.__rc_parking_traj.get_traj().reverse()
-        self.current_trajectory.get_traj().reverse()
+        self.__rc_half_traj.get_traj().reverse()
+
+
+    def trjToArray(self, trj):
+        array = []
+        i = 0
+        for point in trj:
+            array.append([point.x, point.y])
+            i += 1
+        return array
+
 
 
 def isStopPoint(point):
     factorX = ServerConfig.getInstance().factorX
     factorY = ServerConfig.getInstance().factorY
     # check if pointcoordinates are in the parking area
-    if 92 * factorX > point[0] > 75 * factorX and 78 * factorY < point[1] < 153 * factorY:
+    if 92 * factorX > point[0] > 71 * factorX and 80 * factorY < point[1] < 155 * factorY:
         return True
     else:
         return False
@@ -126,3 +156,5 @@ def isChangePoint(point):
 
     else:
         return False
+
+

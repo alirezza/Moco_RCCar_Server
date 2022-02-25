@@ -50,10 +50,10 @@ class ServerConfig:
     MessageDelay = 0.025  # in sek
 
     # Vehicle
-    vehicle_const_speed = 70
+    vehicle_const_speed = 85
     vehicle_angle = 0
     vehicle_curv_factor = 1 / 3
-    vehicle_curv_max = 10
+    vehicle_curv_max = 8
     vehicle_curv_min = 0
 
     vehicle_wheelbase = 9.75 * 1.15  # Radstand, Einheit: cm  # 1.15
@@ -62,6 +62,10 @@ class ServerConfig:
 
     steeringAngle_gradient = 70  # Einheit: deg/sek
     sample_time = 0.2  # Abtastzeit (Zeit pro Loop), Einheit: sek
+
+    #GUI information
+    vehicle_actual_speed = 0
+    vehicle_actual_angle = 0
 
     @staticmethod
     def getInstance():

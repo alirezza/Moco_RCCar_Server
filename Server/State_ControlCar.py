@@ -64,7 +64,7 @@ class StateControlCar(State):
     def __init__(self, corner, path=None):
         if path is not None:
             self.trajectory = trj.RcAdaptiveTrajectory()
-
+            self.path_pts = self.trajectory.get_traj()
         else:
             self.trajectory = trj.RcAdaptiveTrajectory()
             self.path_pts = self.trajectory.get_traj()
@@ -78,10 +78,9 @@ class StateControlCar(State):
         return self
 
     def start_car(self):
-        msg = str(0).zfill(3) + " " + str(0).zfill(3)
+        msg = str(100).zfill(3) + " " + str(0).zfill(3)
         self.clientSocket.sendto(bytes(msg, "utf-8"), (self.UDPServer_IP, self.UDPServer_Port))
         sleep(ServerConfig.getInstance().MessageDelay)
-
         self.control_active_req = True
 
     def stop_car(self):
@@ -102,16 +101,30 @@ class StateControlCar(State):
             self.path_pts_cm.append([path_point.x / self.factorX, path_point.y / self.factorY])
 
     def car_continue(self):
+
         self.path_pts = self.trajectory.get_traj()
         self.car_park_req = False
         self.car_continue_req = True
         self.path_pts_cm = []
         for path_point in self.path_pts:
             self.path_pts_cm.append([path_point.x / self.factorX, path_point.y / self.factorY])
+        self.velocity = ServerConfig.getInstance().vehicle_const_speed
+        msg = str(100).zfill(3) + " " + str(0).zfill(3)
+        self.clientSocket.sendto(bytes(msg, "utf-8"), (self.UDPServer_IP, self.UDPServer_Port))
+
+    def car_half(self):
+        self.path_pts = self.trajectory.get_traj()
+        self.car_park_req = False
+        self.car_continue_req = True
+        self.path_pts_cm = []
+        for path_point in self.path_pts:
+            self.path_pts_cm.append([path_point.x / self.factorX, path_point.y / self.factorY])
+        self.velocity = ServerConfig.getInstance().vehicle_const_speed
 
     def run(self):
 
         # 1 Transformiere Bild
+        global accel
         ret, new_frame = self.cam.read()
 
         if ret:
@@ -154,7 +167,8 @@ class StateControlCar(State):
                             self.lastFigure = carFigure
 
                             cv.polylines(track_img, [np.array(self.lastFigure)], True, (255, 0, 0), 3)
-                            cv.polylines(track_img, [np.array(self.trjToArray(self.path_pts))], True, (0, 255, 0), 3)
+                            cv.polylines(track_img, [np.array(self.trajectory.trjToArray(self.path_pts))], True,
+                                         (0, 255, 0), 3)
 
                             # calculate heading angle
                             if not (topLeft[0] == bottomLeft[0] and topLeft[1] == bottomLeft[1]):
@@ -362,9 +376,7 @@ class StateControlCar(State):
                         self.clientSocket.sendto(bytes(msg, "utf-8"), (self.UDPServer_IP, self.UDPServer_Port))
                         sleep(ServerConfig.getInstance().MessageDelay)
 
-                    # msg = "255 " + str(int(-self.finalSteeringAngle_deg))
-                    # self.clientSocket.sendto(bytes(str(msg), "utf-8"), (self.UDPServer_IP, self.UDPServer_Port))
-                    # sleep(ServerConfig.getInstance().MessageDelay)
+
                 elif self.control_active:
                     # check for path change
                     if self.trajectory.reference_point.change_point_flag:
@@ -372,59 +384,46 @@ class StateControlCar(State):
                         self.path_pts_cm = []
                         for path_point in self.path_pts:
                             self.path_pts_cm.append([path_point.x / self.factorX, path_point.y / self.factorY])
-                    # check stopflag
-                    if self.trajectory.reference_point.stopflag and self.car_park_req:
-                        if trj.isStopPoint(self.lastCoordinate):
-                            msg = str(0).zfill(3) + " " + str(0).zfill(3)
-                            self.clientSocket.sendto(bytes(msg, "utf-8"), (self.UDPServer_IP, self.UDPServer_Port))
-                            sleep(ServerConfig.getInstance().MessageDelay * 2)
-                    else:
+
                         # 9 Sende Daten (Querablagefehler, Winkeldifferenz, Krümmung)sg = str(dY_m,
                         # dPsi_rad/dPsi_deg, K_minv)  # "Winkel, Geschwindigkeit" muss formatiert sein accel =
                         # ServerConfig.getInstance().vehicle_speed + int( pow(abs(self.finalSteeringAngle_deg) * 0.1,
                         # 2.5))
-                        accel = self.velocity
-                        angle = self.finalSteeringAngle_deg
+                    # check stopflag
+                    if self.trajectory.reference_point.stopflag and self.car_park_req:
+                        if trj.isStopPoint(self.lastCoordinate):
+                            accel = 0.9 * self.accel
 
-                        if (
+                        else:
+                            accel = 0.95 * self.accel
+                    else:
+                        accel = ServerConfig.getInstance().vehicle_const_speed
+                    angle = self.finalSteeringAngle_deg
+
+                    if (
                                 abs(angle) * ServerConfig.getInstance().vehicle_curv_factor) < ServerConfig.getInstance().vehicle_curv_min:
                             accel += ServerConfig.getInstance().vehicle_curv_min
-                        if (
+                    if (
                                 abs(angle) * ServerConfig.getInstance().vehicle_curv_factor) > ServerConfig.getInstance().vehicle_curv_max:
                             accel += ServerConfig.getInstance().vehicle_curv_max
-                        else:
+                    else:
                             accel += (abs(angle) * ServerConfig.getInstance().vehicle_curv_factor)
+                    if accel < 15:
+                        accel = 0
+                    self.accel = math.trunc(accel)
+                    self.angle = math.trunc(angle)
 
-                        self.accel = math.trunc(accel)
-                        self.angle = math.trunc(angle)
-                        # print(f'accel: {accel}')
-                        # print(f'angle: {angle}')
-                        ServerConfig.vehicle_angle = self.angle
-                        ServerConfig.vehicle_const_speed = self.accel
-                        msg = str(self.accel).zfill(3) + " " + str(self.angle).zfill(3)
+                    ServerConfig.vehicle_actual_angle = self.angle
+                    ServerConfig.vehicle_actual_speed = self.accel
 
-                        # msg = str(accel).zfill(3) + " " + str(angle).zfill(3)
-                        self.clientSocket.sendto(bytes(msg, "utf-8"), (self.UDPServer_IP, self.UDPServer_Port))
-                        sleep(ServerConfig.getInstance().MessageDelay)
-
-                        # accel = ServerConfig.getInstance().vehicle_const_speed + int(abs(self.finalSteeringAngle_deg) * 0.3)
-                        # accel = 100
-                        # print(accel)
-                        # accel = self.velocity + int(pow(abs(self.finalSteeringAngle_deg) * 0.2, 2))
-                        # print(self.velocity)
-                        # print(f'accel: {accel}')
-                        # msg = "000" + " " + str(int(-self.finalSteeringAngle_deg))
-                        # msg = str(accel) + " " + str(int(-self.finalSteeringAngle_deg))
-                        # self.clientSocket.sendto(bytes(msg, "utf-8"), (self.UDPServer_IP, self.UDPServer_Port))
-                        # sleep(ServerConfig.getInstance().MessageDelay)
-
-                        '''msg = str(int(ServerConfig.getInstance().vehicle_const_speed + 0.25 * abs(self.finalSteeringAngle_deg))) + " " + str(int(-self.finalSteeringAngle_deg))
-                        print(f'msg: {msg}')
-                        self.clientSocket.sendto(bytes(msg, "utf-8"), (self.UDPServer_IP, self.UDPServer_Port))
-                        sleep(ServerConfig.getInstance().MessageDelay)'''
+                    print(self.accel)
+                    msg = str(self.accel).zfill(3) + " " + str(self.angle).zfill(3)
+                    self.clientSocket.sendto(bytes(msg, "utf-8"), (self.UDPServer_IP, self.UDPServer_Port))
+                    sleep(ServerConfig.getInstance().MessageDelay)
 
             cv.imshow('Track Record', track_img)
             k = cv.waitKey(20) & 0xFF
+
 
     def on_enter(self):
 
@@ -458,11 +457,3 @@ class StateControlCar(State):
         cv.destroyAllWindows()
         self.cam.release()
         print("Leaving Control Car State")
-
-    def trjToArray(self, trj):
-        array = []
-        i = 0
-        for point in trj:
-            array.append([point.x, point.y])
-            i += 1
-        return array
