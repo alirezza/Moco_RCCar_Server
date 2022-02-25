@@ -1,3 +1,4 @@
+#from Server import updateValue
 from StateLib import *
 from Configuration import ServerConfig
 import cv2 as cv
@@ -392,10 +393,10 @@ class StateControlCar(State):
                     # check stopflag
                     if self.trajectory.reference_point.stopflag and self.car_park_req:
                         if trj.isStopPoint(self.lastCoordinate):
-                            accel = 0.9 * self.accel
+                            accel = 0.85 * self.accel
 
                         else:
-                            accel = 0.95 * self.accel
+                            accel = 0.90 * self.accel
                     else:
                         accel = ServerConfig.getInstance().vehicle_const_speed
                     angle = self.finalSteeringAngle_deg

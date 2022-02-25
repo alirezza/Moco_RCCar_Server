@@ -26,7 +26,6 @@ class LogicLoop:
         self.myStateMachine.currentState.on_leave()
         print("Logic Loop Ended")
 
-
 @Slot()
 def restart_state_machine():
     myLogicThread.myStateMachine.force_next_state(StateCornerDetection())
@@ -92,12 +91,14 @@ def continue_car():
         myLogicThread.myStateMachine.currentState.trajectory.continue_button_clicked = True
         myLogicThread.myStateMachine.currentState.car_continue()
 
+
 def half_car():
     if isinstance(myLogicThread.myStateMachine.currentState, StateControlCar):
         myLogicThread.myStateMachine.currentState.trajectory.parking_button_clicked = False
         myLogicThread.myStateMachine.currentState.trajectory.continue_button_clicked = False
         myLogicThread.myStateMachine.currentState.trajectory.half_button_clicked = True
         myLogicThread.myStateMachine.currentState.car_half()
+
 
 @Slot()
 def set_velocity(vel):
@@ -126,11 +127,8 @@ def changeDir():
         print("Direction changed")
 
 
-
-
-
-
 class TabDialog(QDialog):
+
     def __init__(self, parent: QWidget = None):
         super().__init__(parent)
 
@@ -154,6 +152,12 @@ class TabDialog(QDialog):
 
 
 class MainTab(QWidget):
+    speed = 0
+    angle = 0
+    def updateValues(self, speed, angle):
+        self.statusText_actualspeed.setText(str(speed))
+        self.statusText_actualangle.setText(str(angle))
+
     def __init__(self, parent: QWidget):
         super().__init__(parent)
         main_group = QGroupBox("Main")
@@ -169,7 +173,6 @@ class MainTab(QWidget):
         self.statusText_angle = QLabel("Steering angle: ")
         self.statusText_actualangle = QLabel("0")
 
-
         main_layout = QVBoxLayout()
         main_layout.addWidget(self.start_button)
         main_layout.addWidget(self.stop_car)
@@ -180,7 +183,6 @@ class MainTab(QWidget):
         manoeuvre_layout.addWidget(self.continue_button)
         manoeuvre_layout.addWidget(self.half_button)
         manoeuvre_group.setLayout(manoeuvre_layout)
-
 
         information_layout = QVBoxLayout()
         information_layout.addWidget(self.statusText_speed)
@@ -222,8 +224,6 @@ class PathTab(QWidget):
         path_layout.addWidget(self.save_button)
         path_layout.addWidget(self.load_button)
         path_group.setLayout(path_layout)
-
-
 
         main_layout = QVBoxLayout()
         main_layout.addWidget(path_group)

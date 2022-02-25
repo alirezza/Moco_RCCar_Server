@@ -50,10 +50,10 @@ class ServerConfig:
     MessageDelay = 0.025  # in sek
 
     # Vehicle
-    vehicle_const_speed = 85
+    vehicle_const_speed = 90
     vehicle_angle = 0
     vehicle_curv_factor = 1 / 3
-    vehicle_curv_max = 8
+    vehicle_curv_max = 10
     vehicle_curv_min = 0
 
     vehicle_wheelbase = 9.75 * 1.15  # Radstand, Einheit: cm  # 1.15
@@ -70,13 +70,13 @@ class ServerConfig:
     @staticmethod
     def getInstance():
         """ Static access method. """
-        if ServerConfig.__instance == None:
+        if ServerConfig.__instance is None:
             ServerConfig()
         return ServerConfig.__instance
 
     def __init__(self):
         """ Virtually private constructor. """
-        if ServerConfig.__instance != None:
+        if ServerConfig.__instance is not None:
             raise Exception("This class is a singleton!")
         else:
             ServerConfig.__instance = self
