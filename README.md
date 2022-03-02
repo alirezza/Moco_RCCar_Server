@@ -1,11 +1,12 @@
-#Moco_RCCar_Server
+# Moco_RCCar_Server
 Repo for Motion Control RCCar Server
 
 ## **_!!! please be careful and protect the car from falling down !!!_**
-##Installation:
+## Installation:
     install opencv: pip install opencv-contrib-python
     install Qt6: pip install PySide6
-##Getting Started:
+    
+## Getting Started:
 
     1-conncet your cam to the computer
     2-find and replace the CamSelect in Configuration
@@ -25,7 +26,7 @@ Repo for Motion Control RCCar Server
     16-you can draw again by clicking the "clear path" button
     17-click "save path" to replace the old path
     18-click "lock in path" to switch to the control car state and press start
-##Aruco:
+## Aruco:
 You can generate ArUco in https://chev.me/arucogen/.
 
 The app is currently using "Original arUco" Dictionary.
@@ -36,7 +37,7 @@ The app is currently using "Original arUco" Dictionary.
         tagID_bottomLeft = 63
         tagID_car = 21
 The corner ids can be changed in State_CornerDetection.py/on_enter and car id in State_ControlCar.py/run.
-##Car setup:
+## Car setup:
 [MotoDriver](/https://joy-it.net/de/products/SBC-Motodriver2)
 
 Li-Ion battery
@@ -45,54 +46,54 @@ Li-Ion battery
     max discharge current: 20A
 [ESP8266 NodeMCU](https://components101.com/sites/default/files/component_datasheet/ESP8266-NodeMCU-Datasheet.pdf)
 
-###Connection
+### Connection
 ![Circuit](./img/Circuit.png?raw=true "Circuit")
-##GUI Guide:
-###main:
+## GUI Guide:
+### main:
 ![maintab](./img/maintab.png?raw=true "maintab")
-####start car:
+#### start car:
 by clicking this button the car will first get a start power of 150 and continue with the vehicle_const_speed
-####stop car:
+#### stop car:
 by clicking this button the car will stop
-####park:
+#### park:
 by clicking this button the current path will change to parking path as soon as the car is in the change-path-area and the car will be stopped in the parking area.
-####continue:
+#### continue:
 by clicking this button the current path will change to normal path as soon as the car is in the change-path-area and drive the path again and again.
-####short round:
+#### short round:
 by clicking this button the current path will change to half path as soon as the car is in the change-path-area and drive the path again and again.
-###path:
+### path:
 ![pathtab](./img/pathtab.png?raw=true "pathtab")
-####create new path:
+#### create new path:
 by clicking this button the current state will change to `State_pathDetect` and a new windows will pop up, where you can draw a path by setting points on the window.
-####lock in path:
+#### lock in path:
 by clicking this button the current state will change to the `State_ControlCar`.
-####clear path:
+#### clear path:
 by clicking this button the drawn path will be removed.
-####save path:
+#### save path:
 by clicking this button you can save the drawn path as .trj file
-####load path:
+#### load path:
 by clicking this button you can see the .trj file on the draw window
-###setting:
+### setting:
 ![settingtab](./img/settingtab.png?raw=true "settingtab")
-####reset state machine:
+#### reset state machine:
 by clicking this button your state machine will begin again in the `State_CornerDetection`.
 note: restart the GUI if it doesn't help, your thread may be stopped due some error.
-####change direction:
+#### change direction:
 by clicking this button you can change the direction of the path.
 note: you have to change the path and set it again!
 please stop the car and turn it to the right direction manually
-####reset corners:
+#### reset corners:
 by clicking this button the corner.trj file will be removed and the current state will be changed to `State_CornerDetection`, and the program try to find the 
 corner ids and save this again.
-####speed slider:
+#### speed slider:
 by dragging this slider you can change the speed.
 right for accelerate and left for decelerate.
-##FAQ:
-###how can I switch the path?
+## FAQ:
+### how can I switch the path?
 click the park, continue or short round button to change the path.
 
 attention! the path does change when the car is in the change-path-area.
-###how can I change the speed?
+### how can I change the speed?
 there are two ways:
 
 1-change the initialized speed:
@@ -102,7 +103,7 @@ there are two ways:
 
     1-click the setting tab
     2-drag the slider to the right to accelerate the car and left to decelerate the car
-###how can I create my own path?
+### how can I create my own path?
 you can only replace the trajectory.
 
     1-click the path tab
@@ -112,12 +113,12 @@ you can only replace the trajectory.
     5-replace the old .trj file
     6-click lock in path
     
-###how can I set new corners?
+### how can I set new corners?
     1-click the setting tab
     2-click the reset corners button
-###how can I change the camera?
+### how can I change the camera?
     1-open Configuration.py and change the CamSelect
-###why does the car not park?
+### why does the car not park?
 this issue may be caused due the `isStopPoint()` function in Trajectory.
 
         1-open the GUI
@@ -128,7 +129,7 @@ this issue may be caused due the `isStopPoint()` function in Trajectory.
         6-write down the coordinates
         7-replace the values in isStopPoint() with your new coordinates
     
-###why is the path not changed?
+### why is the path not changed?
 this issue may be caused due the `isChangePoint()` function in Trajectory.
 
     1-open the GUI
@@ -138,7 +139,7 @@ this issue may be caused due the `isChangePoint()` function in Trajectory.
     5-the coordinates of the points will be printed in python terminal
     6-write down the coordinates
     7-replace the values in isChangePoint() with your new coordinates
-###why doesn't the car steer?
+### why doesn't the car steer?
     1-restart the car and try it again
     2-restart the esp and try it again
     3-restart the gui and try it again
