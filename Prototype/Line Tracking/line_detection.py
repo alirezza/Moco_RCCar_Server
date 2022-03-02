@@ -1,8 +1,4 @@
-from time import sleep
-
 import cv2 as cv
-import numpy as np
-import line2class as l2c
 
 # image size for warped image
 img_width = img_height = 720

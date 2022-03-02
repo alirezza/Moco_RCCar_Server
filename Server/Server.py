@@ -48,7 +48,7 @@ def clear_path():
 @Slot()
 def load_path(widget):
     if isinstance(myLogicThread.myStateMachine.currentState, StatePathDetect):
-        LoadDialog = QFileDialog.getOpenFileName(widget, 'Open file', 'd:\\', "TrajectoryFiles (*.trj)")
+        LoadDialog = QFileDialog.getOpenFileName(widget, 'Open file', '__file__/../../Trajs', "TrajectoryFiles (*.trj)")
         # print(LoadDialog)
         if LoadDialog[0] != '':
             myLogicThread.myStateMachine.currentState.load_trajectory(LoadDialog[0])
@@ -57,7 +57,7 @@ def load_path(widget):
 @Slot()
 def save_path(widget):
     if isinstance(myLogicThread.myStateMachine.currentState, StatePathDetect):
-        SaveDialog = QFileDialog.getSaveFileName(widget, 'Save file', 'd:\\', "TrajectoryFiles (*.trj)")
+        SaveDialog = QFileDialog.getSaveFileName(widget, 'Save file', '__file__/../../Trajs', "TrajectoryFiles (*.trj)")
         if SaveDialog[0] != '':
             myLogicThread.myStateMachine.currentState.save_trajectory(SaveDialog[0])
 
@@ -135,7 +135,7 @@ class TabDialog(QDialog):
         tab_widget = QTabWidget()
         tab_widget.addTab(MainTab(self), "Main")
         tab_widget.addTab(PathTab(self), "Path")
-        tab_widget.addTab(SettingTab(self), "Applications")
+        tab_widget.addTab(SettingTab(self), "Setting")
 
         button_box = QDialogButtonBox(
             QDialogButtonBox.Cancel

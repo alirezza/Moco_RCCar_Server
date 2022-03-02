@@ -1,12 +1,11 @@
 import pickle
 
-from StateLib import *
 import cv2 as cv
 import numpy as np
-import time, math
-from State_ControlCar import StateControlCar
-from State_PathDetect import StatePathDetect
+
 from Configuration import ServerConfig
+from StateLib import *
+from State_ControlCar import StateControlCar
 
 
 class StateCornerDetection(State):

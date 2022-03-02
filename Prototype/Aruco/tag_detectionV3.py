@@ -1,6 +1,8 @@
+import math
+import time
+
 import cv2 as cv
 import numpy as np
-import time, math
 
 
 def displayimage(window_name, input_image):

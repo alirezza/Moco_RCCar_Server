@@ -1,12 +1,14 @@
 #from Server import updateValue
-from StateLib import *
-from Configuration import ServerConfig
+import math
+import socket
+from time import sleep
+
 import cv2 as cv
 import numpy as np
-import socket
-import math
-from time import sleep
+
 import Trajectory as trj
+from Configuration import ServerConfig
+from StateLib import *
 
 
 class StateControlCar(State):
@@ -79,7 +81,7 @@ class StateControlCar(State):
         return self
 
     def start_car(self):
-        msg = str(100).zfill(3) + " " + str(0).zfill(3)
+        msg = str(150).zfill(3) + " " + str(0).zfill(3)
         self.clientSocket.sendto(bytes(msg, "utf-8"), (self.UDPServer_IP, self.UDPServer_Port))
         sleep(ServerConfig.getInstance().MessageDelay)
         self.control_active_req = True
@@ -110,7 +112,7 @@ class StateControlCar(State):
         for path_point in self.path_pts:
             self.path_pts_cm.append([path_point.x / self.factorX, path_point.y / self.factorY])
         self.velocity = ServerConfig.getInstance().vehicle_const_speed
-        msg = str(100).zfill(3) + " " + str(0).zfill(3)
+        msg = str(150).zfill(3) + " " + str(0).zfill(3)
         self.clientSocket.sendto(bytes(msg, "utf-8"), (self.UDPServer_IP, self.UDPServer_Port))
 
     def car_half(self):
@@ -390,26 +392,27 @@ class StateControlCar(State):
                         # dPsi_rad/dPsi_deg, K_minv)  # "Winkel, Geschwindigkeit" muss formatiert sein accel =
                         # ServerConfig.getInstance().vehicle_speed + int( pow(abs(self.finalSteeringAngle_deg) * 0.1,
                         # 2.5))
+                    angle = self.finalSteeringAngle_deg
+                    accel = ServerConfig.getInstance().vehicle_const_speed
+
+                    if (
+                            abs(angle) * ServerConfig.getInstance().vehicle_curv_factor) < ServerConfig.getInstance().vehicle_curv_min:
+                        accel += ServerConfig.getInstance().vehicle_curv_min
+                    if (
+                            abs(angle) * ServerConfig.getInstance().vehicle_curv_factor) > ServerConfig.getInstance().vehicle_curv_max:
+                        accel += ServerConfig.getInstance().vehicle_curv_max
+                    else:
+                        accel += (abs(angle) * ServerConfig.getInstance().vehicle_curv_factor)
                     # check stopflag
                     if self.trajectory.reference_point.stopflag and self.car_park_req:
                         if trj.isStopPoint(self.lastCoordinate):
-                            accel = 0.85 * self.accel
+                            accel =  self.accel -2
 
                         else:
-                            accel = 0.90 * self.accel
-                    else:
-                        accel = ServerConfig.getInstance().vehicle_const_speed
-                    angle = self.finalSteeringAngle_deg
+                            accel =  self.accel - 1
 
-                    if (
-                                abs(angle) * ServerConfig.getInstance().vehicle_curv_factor) < ServerConfig.getInstance().vehicle_curv_min:
-                            accel += ServerConfig.getInstance().vehicle_curv_min
-                    if (
-                                abs(angle) * ServerConfig.getInstance().vehicle_curv_factor) > ServerConfig.getInstance().vehicle_curv_max:
-                            accel += ServerConfig.getInstance().vehicle_curv_max
-                    else:
-                            accel += (abs(angle) * ServerConfig.getInstance().vehicle_curv_factor)
-                    if accel < 15:
+
+                    if accel < 30:
                         accel = 0
                     self.accel = math.trunc(accel)
                     self.angle = math.trunc(angle)

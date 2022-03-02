@@ -1,6 +1,6 @@
 import socket
 from time import sleep
-import cv2 as cv
+
 from Configuration import ServerConfig
 from StateLib import *
 

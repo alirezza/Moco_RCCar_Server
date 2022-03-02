@@ -1,4 +1,3 @@
-import numpy as np
 import cv2
 
 # Create a VideoCapture object and read from input file

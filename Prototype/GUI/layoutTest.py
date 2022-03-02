@@ -1,4 +1,5 @@
 import sys
+
 from PySide6.QtWidgets import (QLineEdit, QPushButton, QApplication,
                                QVBoxLayout, QDialog)
 

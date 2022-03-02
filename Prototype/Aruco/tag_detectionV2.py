@@ -1,6 +1,7 @@
+import time
+
 import cv2 as cv
 import numpy as np
-import time
 
 # image size
 img_width = img_height = 800

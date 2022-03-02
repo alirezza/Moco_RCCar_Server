@@ -1,6 +1,6 @@
 import os
 import pickle
-import enum
+
 from Configuration import ServerConfig
 
 
